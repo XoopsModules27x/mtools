@@ -22,12 +22,19 @@ namespace XoopsModules\Mtools\Common;
  * @author       Mamba <mambax7@gmail.com>
  */
 
-use Xmf\Module\Admin;
-use Xmf\Request;
 use XoopsModules\Mtools\Helper;
 
 /**
  * Class SysUtility
+ *
+ * Backward-compatible FACADE over the focused Common helpers. Historically this class
+ * was a grab-bag; its logic now lives in {@see Text} (pure string helpers),
+ * {@see Db} (database helpers, explicit handle) and {@see Output} (admin/UI output).
+ * Every method below forwards to one of those, keeping its original signature so
+ * existing `$utility::method()` calls — including from consumer subclasses that
+ * extend this class — keep working unchanged.
+ *
+ * @api Stable Common-tier API (Lab\* is experimental, module-local code is private).
  */
 class SysUtility
 {
@@ -61,122 +68,62 @@ class SysUtility
     }
 
     /**
+     * Forwards to {@see Output::selectSorting()} with the CONSUMER's resolved Helper.
+     *
      * @param             $text
      * @param             $form_sort
      * @param Helper|null $helper
      */
     public static function selectSorting($text, $form_sort, $helper = null): string
     {
-        global $start, $order, $file_cat, $sort, $xoopsModule;
-
-        $select_view   = '';
-        $moduleDirName = \basename(\dirname(__DIR__));
-        /** @var Helper $helper */
-        if (null === $helper) {
-            $helper = Helper::getInstance();
-        }
-
-        //$pathModIcon16 = XOOPS_URL . '/modules/' . $moduleDirName . '/' . $helper->getConfig('modicons16');
-        $pathModIcon16 = $helper->url($helper->getModule()->getInfo('modicons16'));
-        //        $pathIcon16 = Admin::iconUrl('', '16');
-
-        $select_view = '<form name="form_switch" id="form_switch" action="' . Request::getString('REQUEST_URI', '', 'SERVER') . '" method="post"><span style="font-weight: bold;">' . $text . '</span>';
-        //$sorts =  $sort ==  'asc' ? 'desc' : 'asc';
-        if ($form_sort == $sort) {
-            $sel1 = 'asc' === $order ? 'selasc.png' : 'asc.png';
-            $sel2 = 'desc' === $order ? 'seldesc.png' : 'desc.png';
-        } else {
-            $sel1 = 'asc.png';
-            $sel2 = 'desc.png';
-        }
-        $select_view .= '  <a href="' . Request::getString('SCRIPT_NAME', '', 'SERVER') . '?start=' . $start . '&sort=' . $form_sort . '&order=asc"><img src="' . $pathModIcon16 . '/' . $sel1 . '" title="ASC" alt="ASC"></a>';
-        $select_view .= '<a href="' . Request::getString('SCRIPT_NAME', '', 'SERVER') . '?start=' . $start . '&sort=' . $form_sort . '&order=desc"><img src="' . $pathModIcon16 . '/' . $sel2 . '" title="DESC" alt="DESC"></a>';
-        $select_view .= '</form>';
-
-        return $select_view;
+        return Output::selectSorting($text, $form_sort, $helper ?? self::consumerHelper());
     }
 
     /***************Blocks***************/
 
     /**
+     * Forwards to {@see Db::blockAddCatSelect()}.
+     *
      * @param array $cats
      */
     public static function blockAddCatSelect($cats): string
     {
-        $cat_sql = '';
-        if (\is_array($cats) && !empty($cats)) {
-            $cat_sql = '(' . \current($cats);
-            \array_shift($cats);
-            foreach ($cats as $cat) {
-                $cat_sql .= ',' . $cat;
-            }
-            $cat_sql .= ')';
-        }
-
-        return $cat_sql;
+        return Db::blockAddCatSelect($cats);
     }
 
     /**
+     * Forwards to {@see Output::metaKeywords()}.
+     *
      * @param $content
      */
     public static function metaKeywords($content): void
     {
-        global $xoopsTpl, $xoTheme;
-        $myts    = \MyTextSanitizer::getInstance();
-        $content = $myts->undoHtmlSpecialChars($myts->displayTarea($content));
-        if (null !== $xoTheme && \is_object($xoTheme)) {
-            $xoTheme->addMeta('meta', 'keywords', \strip_tags($content));
-        } else {    // Compatibility for old Xoops versions
-            $xoopsTpl->assign('xoops_metaKeywords', \strip_tags($content));
-        }
+        Output::metaKeywords($content);
     }
 
     /**
+     * Forwards to {@see Output::metaDescription()}.
+     *
      * @param $content
      */
     public static function metaDescription($content): void
     {
-        global $xoopsTpl, $xoTheme;
-        $myts    = \MyTextSanitizer::getInstance();
-        $content = $myts->undoHtmlSpecialChars($myts->displayTarea($content));
-        if (null !== $xoTheme && \is_object($xoTheme)) {
-            $xoTheme->addMeta('meta', 'description', \strip_tags($content));
-        } else {    // Compatibility for old Xoops versions
-            $xoopsTpl->assign('xoops_metaDescription', \strip_tags($content));
-        }
+        Output::metaDescription($content);
     }
 
     /**
+     * Forwards to {@see Db::enumerate()} using the global XOOPS database handle.
+     *
      * @param $tableName
      * @param $columnName
      */
     public static function enumerate($tableName, $columnName): array
     {
-        $table = $GLOBALS['xoopsDB']->prefix($tableName);
-
-        //    $result = $GLOBALS['xoopsDB']->query("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
-        //        WHERE TABLE_NAME = '" . $table . "' AND COLUMN_NAME = '" . $columnName . "'")
-        //    || exit ($GLOBALS['xoopsDB']->error());
-
-        $sql    = 'SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = "' . $table . '" AND COLUMN_NAME = "' . $columnName . '"';
-        $result = $GLOBALS['xoopsDB']->query($sql);
-        if (!$GLOBALS['xoopsDB']->isResultSet($result) || !($result instanceof \mysqli_result)) {
-            \trigger_error(\sprintf(\_DB_QUERY_ERROR, $sql) . $GLOBALS['xoopsDB']->error(), \E_USER_ERROR);
-        }
-
-        $row = (($GLOBALS['xoopsDB']->isResultSet($result) && ($result instanceof \mysqli_result)) ? $GLOBALS['xoopsDB']->fetchBoth($result) : false);
-        if (false === $row) {
-            return [];
-        }
-        $enumList = \explode(',', \str_replace("'", '', \mb_substr($row['COLUMN_TYPE'], 5, -6)));
-
-        return $enumList;
+        return Db::enumerate($GLOBALS['xoopsDB'], (string)$tableName, (string)$columnName);
     }
 
     /**
-     * truncateHtml can truncate a string up to a number of characters while preserving whole words and HTML tags
-     * www.gsdesign.ro/blog/cut-html-string-without-breaking-the-tags
-     * www.cakephp.org
+     * Forwards to {@see Text::truncateHtml()}.
      *
      * @param string $text         String to truncate.
      * @param int    $length       Length of returned string, including ellipsis.
@@ -188,153 +135,61 @@ class SysUtility
      */
     public static function truncateHtml($text, $length = 100, $ending = '...', $exact = false, $considerHtml = true): string
     {
-        $openTags = [];
-        if ($considerHtml) {
-            // if the plain text is shorter than the maximum length, return the whole text
-            if (mb_strlen(\preg_replace('/<.*?' . '>/', '', $text)) <= $length) {
-                return $text;
-            }
-            // splits all html-tags to scanable lines
-            \preg_match_all('/(<.+?' . '>)?([^<>]*)/s', $text, $lines, \PREG_SET_ORDER);
-            $total_length = mb_strlen($ending);
-            $openTags     = [];
-            $truncate     = '';
-            foreach ($lines as $lineMatchings) {
-                // if there is any html-tag in this line, handle it and add it (uncounted) to the output
-                if (!empty($lineMatchings[1])) {
-                    // if it's an "empty element" with or without xhtml-conform closing slash
-                    if (\preg_match('/^<(\s*.+?\/\s*|\s*(img|br|input|hr|area|base|basefont|col|frame|isindex|link|meta|param)(\s.+?)?)>$/is', $lineMatchings[1])) {
-                        // do nothing
-                        // if tag is a closing tag
-                    } elseif (\preg_match('/^<\s*\/(\S+?)\s*>$/s', $lineMatchings[1], $tag_matchings)) {
-                        // delete tag from $openTags list
-                        $pos = \array_search($tag_matchings[1], $openTags, true);
-                        if (false !== $pos) {
-                            unset($openTags[$pos]);
-                        }
-                        // if tag is an opening tag
-                    } elseif (\preg_match('/^<\s*([^\s>!]+).*?' . '>$/s', $lineMatchings[1], $tag_matchings)) {
-                        // add tag to the beginning of $openTags list
-                        \array_unshift($openTags, \mb_strtolower($tag_matchings[1]));
-                    }
-                    // add html-tag to $truncate'd text
-                    $truncate .= $lineMatchings[1];
-                }
-                // calculate the length of the plain text part of the line; handle entities as one character
-                $content_length = mb_strlen(\preg_replace('/&[0-9a-z]{2,8};|&#[0-9]{1,7};|[0-9a-f]{1,6};/i', ' ', $lineMatchings[2]));
-                if ($total_length + $content_length > $length) {
-                    // the number of characters which are left
-                    $left            = $length - $total_length;
-                    $entities_length = 0;
-                    // search for html entities
-                    if (\preg_match_all('/&[0-9a-z]{2,8};|&#[0-9]{1,7};|[0-9a-f]{1,6};/i', $lineMatchings[2], $entities, \PREG_OFFSET_CAPTURE)) {
-                        // calculate the real length of all entities in the legal range
-                        foreach ($entities[0] as $entity) {
-                            if ($left >= $entity[1] + 1 - $entities_length) {
-                                $left--;
-                                $entities_length += mb_strlen($entity[0]);
-                            } else {
-                                // no more characters left
-                                break;
-                            }
-                        }
-                    }
-                    $truncate .= mb_substr($lineMatchings[2], 0, $left + $entities_length);
-                    // maximum lenght is reached, so get off the loop
-                    break;
-                }
-                $truncate     .= $lineMatchings[2];
-                $total_length += $content_length;
-
-                // if the maximum length is reached, get off the loop
-                if ($total_length >= $length) {
-                    break;
-                }
-            }
-        } else {
-            if (mb_strlen($text) <= $length) {
-                return $text;
-            }
-            $truncate = mb_substr($text, 0, $length - mb_strlen($ending));
-        }
-        // if the words shouldn't be cut in the middle...
-        if (!$exact) {
-            // ...search the last occurance of a space...
-            $spacepos = mb_strrpos($truncate, ' ');
-            if (false !== $spacepos) {
-                // ...and cut the text in this position
-                $truncate = mb_substr($truncate, 0, $spacepos);
-            }
-        }
-        // add the defined ending to the text
-        $truncate .= $ending;
-        if ($considerHtml) {
-            // close all unclosed html-tags
-            foreach ($openTags as $tag) {
-                $truncate .= '</' . $tag . '>';
-            }
-        }
-
-        return $truncate;
+        return Text::truncateHtml((string)$text, (int)$length, (string)$ending, (bool)$exact, (bool)$considerHtml);
     }
 
     /**
+     * Forwards to {@see Output::getEditor()} with the CONSUMER's resolved Helper.
+     *
      * @param \Xmf\Module\Helper $helper
      * @param array|null         $options
      * @return \XoopsFormDhtmlTextArea|\XoopsFormEditor
      */
     public static function getEditor($helper = null, $options = null)
     {
-        /** @var Helper $helper */
-        if (null === $options) {
-            $options           = [];
-            $options['name']   = 'Editor';
-            $options['value']  = 'Editor';
-            $options['rows']   = 10;
-            $options['cols']   = '100%';
-            $options['width']  = '100%';
-            $options['height'] = '400px';
-        }
-
-        if (null === $helper) {
-            $helper = Helper::getInstance();
-        }
-
-        $isAdmin = $helper->isUserAdmin();
-
-        if (\class_exists('XoopsFormEditor')) {
-            if ($isAdmin) {
-                $descEditor = new \XoopsFormEditor(\ucfirst($options['name']), $helper->getConfig('editorAdmin'), $options, $nohtml = false, $onfailure = 'textarea');
-            } else {
-                $descEditor = new \XoopsFormEditor(\ucfirst($options['name']), $helper->getConfig('editorUser'), $options, $nohtml = false, $onfailure = 'textarea');
-            }
-        } else {
-            $descEditor = new \XoopsFormDhtmlTextArea(\ucfirst($options['name']), $options['name'], $options['value'], '100%', '100%');
-        }
-
-        //        $form->addElement($descEditor);
-
-        return $descEditor;
+        return Output::getEditor($helper ?? self::consumerHelper(), $options);
     }
 
     /**
+     * Resolve the CONSUMER's module Helper (not mtools' own).
+     *
+     * A consumer extends this class as `XoopsModules\<Consumer>\Utility`, so late
+     * static binding lets us derive its sibling `XoopsModules\<Consumer>\Helper`.
+     * Falls back to mtools' Helper when no consumer-specific Helper is found, so
+     * shared methods never silently bind to mtools' own icons/config/editor.
+     *
+     * @return \Xmf\Module\Helper|Helper
+     */
+    private static function consumerHelper()
+    {
+        $class    = static::class;
+        $lastSlash = \strrpos($class, '\\');
+
+        if (false !== $lastSlash) {
+            $helperClass = \substr($class, 0, $lastSlash) . '\\Helper';
+
+            if (\class_exists($helperClass) && \method_exists($helperClass, 'getInstance')) {
+                return $helperClass::getInstance();
+            }
+        }
+
+        return Helper::getInstance();
+    }
+
+    /**
+     * Forwards to {@see Db::fieldExists()} using the global XOOPS database handle.
+     *
      * @param $fieldname
      * @param $table
      */
     public static function fieldExists(string $fieldname, string $table): bool
     {
-        global $xoopsDB;
-        if (!preg_match('/^[A-Za-z0-9_]+$/', $fieldname) || !preg_match('/^[A-Za-z0-9_`]+$/', $table)) {
-            return false;
-        }
-
-        $sql    = 'SHOW COLUMNS FROM ' . $table . ' LIKE ' . $xoopsDB->quote($fieldname);
-        $result = self::queryAndCheck($xoopsDB, $sql);
-
-        return ((($xoopsDB->isResultSet($result) && ($result instanceof \mysqli_result)) ? $xoopsDB->getRowsNum($result) : 0) > 0);
+        return Db::fieldExists($GLOBALS['xoopsDB'], $fieldname, $table);
     }
 
     /**
+     * Forwards to {@see Db::cloneRecord()} using the global XOOPS database handle.
+     *
      * @param array|string $tableName
      * @param string       $id_field
      * @param int          $id
@@ -343,38 +198,7 @@ class SysUtility
      */
     public static function cloneRecord($tableName, $id_field, $id)
     {
-        $new_id = false;
-        if (!preg_match('/^[A-Za-z0-9_]+$/', (string)$tableName)
-            || !preg_match('/^[A-Za-z0-9_]+$/', (string)$id_field)) {
-            return false;
-        }
-
-        $table  = $GLOBALS['xoopsDB']->prefix($tableName);
-        // copy content of the record you wish to clone
-        $sql    = "SELECT * FROM $table WHERE `$id_field`=" . $GLOBALS['xoopsDB']->quote((string)$id);
-        $tempTable = null;
-        $result    = $GLOBALS['xoopsDB']->query($sql);
-        if ($GLOBALS['xoopsDB']->isResultSet($result) && $result instanceof \mysqli_result) {
-            $tempTable = (($GLOBALS['xoopsDB']->isResultSet($result) && ($result instanceof \mysqli_result)) ? $GLOBALS['xoopsDB']->fetchArray($result, \MYSQLI_ASSOC) : false);
-        }
-        if (!$tempTable) {
-            \trigger_error($GLOBALS['xoopsDB']->error());
-        }
-        // set the auto-incremented id's value to blank.
-        unset($tempTable[$id_field]);
-        // insert cloned copy of the original  record
-        $columns = array_map(static fn ($column): string => '`' . str_replace('`', '``', (string)$column) . '`', array_keys($tempTable));
-        $values  = array_map(static fn ($value): string => $GLOBALS['xoopsDB']->quote((string)$value), array_values($tempTable));
-        $sql     = "INSERT INTO $table (" . \implode(', ', $columns) . ') VALUES (' . \implode(', ', $values) . ')';
-        $result  = $GLOBALS['xoopsDB']->exec($sql);
-        if (!$result) {
-            \trigger_error(\sprintf(\_DB_QUERY_ERROR, $sql) . $GLOBALS['xoopsDB']->error(), \E_USER_ERROR);
-
-        }
-        // Return the new id
-        $new_id = $GLOBALS['xoopsDB']->getInsertId();
-
-        return $new_id;
+        return Db::cloneRecord($GLOBALS['xoopsDB'], $tableName, (string)$id_field, (int)$id);
     }
 
     /**
@@ -401,25 +225,18 @@ class SysUtility
     /**
      * Check if dB table exists
      *
+     * @deprecated Use Xmf\Database\Tables instead. Forwards to {@see Db::tableExists()}.
+     *
      * @param string $tablename dB tablename with prefix
      * @return bool true if table exists
      */
     public static function tableExists(string $tablename): bool
     {
-        $ret    = false;
-        $trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS, 1);
-        \trigger_error(__FUNCTION__ . " is deprecated, called from {$trace[0]['file']} line {$trace[0]['line']}");
-        $GLOBALS['xoopsLogger']->addDeprecated(
-            \basename(\dirname(__DIR__, 2)) . ' Module: ' . __FUNCTION__ . ' function is deprecated, please use Xmf\Database\Tables method(s) instead.' . " Called from {$trace[0]['file']}line {$trace[0]['line']}"
-        );
-        $sql    = 'SHOW TABLES LIKE ' . $GLOBALS['xoopsDB']->quote($tablename);
-        $result = self::queryAndCheck($GLOBALS['xoopsDB'], $sql);
-
-        return $GLOBALS['xoopsDB']->isResultSet($result) && ($result instanceof \mysqli_result) && $GLOBALS['xoopsDB']->getRowsNum($result) > 0;
+        return Db::tableExists($GLOBALS['xoopsDB'], $tablename);
     }
 
     /**
-     * Query and check if the result is a valid result set
+     * Query and check if the result is a valid result set. Forwards to {@see Db::queryAndCheck()}.
      *
      * @param \XoopsMySQLDatabase $xoopsDB XOOPS Database
      * @param string              $sql     a valid MySQL query
@@ -430,18 +247,16 @@ class SysUtility
      */
     public static function queryAndCheck(\XoopsMySQLDatabase $xoopsDB, string $sql, $limit = 0, $start = 0): \mysqli_result
     {
-        $result = $xoopsDB->query($sql, $limit, $start);
-
-        if (!$xoopsDB->isResultSet($result) || !($result instanceof \mysqli_result)) {
-            throw new \RuntimeException(
-                \sprintf(\_DB_QUERY_ERROR, $sql) . $xoopsDB->error(), \E_USER_ERROR);
-        }
-
-        return $result;
+        return Db::queryAndCheck($xoopsDB, $sql, (int)$limit, (int)$start);
     }
 
     /**
      * QueryF and check if the result is a valid result set
+     *
+     * @deprecated 2.7.0 queryF() bypassed Protector's SQL inspection. For SELECTs use
+     *             {@see self::queryAndCheck()} (query()); for writes/DDL call $db->exec()
+     *             directly. This wrapper now delegates to {@see Db::queryFAndCheck()} and
+     *             is retained only for backward compatibility.
      *
      * @param \XoopsMySQLDatabase $xoopsDB XOOPS Database
      * @param string              $sql     a valid MySQL query
@@ -452,7 +267,6 @@ class SysUtility
      */
     public static function queryFAndCheck(\XoopsMySQLDatabase $xoopsDB, string $sql, $limit = 0, $start = 0): \mysqli_result
     {
-        return self::queryAndCheck($xoopsDB, $sql, $limit, $start);
+        return Db::queryFAndCheck($xoopsDB, $sql, (int)$limit, (int)$start);
     }
-
 }

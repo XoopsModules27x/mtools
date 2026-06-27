@@ -33,6 +33,8 @@ Architecture and adoption docs:
 - [Helper usage reference](docs/USAGE.md)
 - [Consumer guide](docs/CONSUMER-GUIDE.md)
 - [Conversion tutorial](docs/CONVERTING-A-MODULE-WITH-MTOOLS.md)
+- [Adoption matrix](docs/ADOPTION.md)
+- [Consumer starter files](starters/consumer/README.md)
 - [GitHub Wiki publishing](docs/GITHUB-WIKI.md)
 - [Versioning and deprecation](docs/VERSIONING.md)
 

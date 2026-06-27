@@ -15,11 +15,12 @@ namespace XoopsModules\Mtools\Common;
 /**
  * Class Migrate synchronize existing tables with target schema
  *
- * @category  Migrate
- * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2016 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
- * @link      https://xoops.org
+ * @category        Migrate
+ * @author          Richard Griffith <richard@geekwright.com>
+ * @copyright       2000-2026 XOOPS Project (https://xoops.org)
+ * @license         GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ *
+ * @api             Stable Common-tier API (Lab\* is experimental, module-local code is private).
  */
 class Migrate extends \Xmf\Database\Migrate
 {

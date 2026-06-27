@@ -15,7 +15,12 @@ blocks, language files, and visual design.
 `mtools` is the shared-helper host. A consumer module may use:
 
 - `XoopsModules\Mtools\Common\...` for stable shared helpers.
-- `XoopsModules\Mtools\Bootstrap` for runtime dependency checks.
+- `XoopsModules\Mtools\Module\ConsumerRuntime` for runtime dependency checks
+  (the one-call guard consumers use).
+- `XoopsModules\Mtools\Module\Installer` for the shared, Configurator-driven
+  install/update filesystem boilerplate.
+- `XoopsModules\Mtools\Bootstrap` is the low-level primitive `ConsumerRuntime`
+  wraps; consumers do not call it directly.
 - `XoopsModules\Mtools\Module\Dependency` for lower-level module dependency
   checks.
 
@@ -109,28 +114,34 @@ The important rules:
 
 ## Step 3: Add One Dependency Helper in the Consumer
 
-Create `include/mtools_dependency.php` in the consumer module.
+Create `include/mtools_dependency.php` in the consumer module. This is the ONLY
+per-module dependency boilerplate left: a thin, mtools-absence-safe shim. A class
+inside mtools cannot report its own non-existence, so this one guard stays
+consumer-side — everything else delegates to
+`XoopsModules\Mtools\Module\ConsumerRuntime`.
 
 Quotes uses:
 
 ```php
 <?php declare(strict_types=1);
 
-use XoopsModules\Mtools;
+use XoopsModules\Mtools\Module\ConsumerRuntime;
 
 if (!function_exists('quotes_mtools_dependency_error')) {
     function quotes_mtools_dependency_error(): string
     {
-        if (!class_exists(Mtools\Bootstrap::class)) {
+        if (!class_exists(ConsumerRuntime::class)) {
             return 'The mtools module files are missing. Install mtools before installing or running Quotes.';
         }
 
-        $status = Mtools\Bootstrap::checkRuntime('1.0.0', '1.1.0');
-
-        return $status['ok'] ? '' : Mtools\Bootstrap::statusMessage($status);
+        return ConsumerRuntime::dependencyError('1.0.0', '1.1.0');
     }
 }
 ```
+
+`ConsumerRuntime::dependencyError()` wraps the low-level
+`Mtools\Bootstrap::checkRuntime()` + `Bootstrap::statusMessage()` primitives, so
+consumers no longer hand-check `$status['ok']`.
 
 For another module, rename the function:
 
@@ -158,6 +169,18 @@ if ('' !== $mtoolsDependencyError) {
 }
 ```
 
+Once `bootstrap.php` has run (so mtools' presence is already established), an
+entry point can collapse that redirect to the shared guard:
+
+```php
+require __DIR__ . '/bootstrap.php';
+
+\XoopsModules\Mtools\Module\ConsumerRuntime::guard(XOOPS_URL);
+```
+
+The absence-safe shim is still the first line of defence in `bootstrap.php`;
+`ConsumerRuntime::guard()` is for contexts where presence is established.
+
 Quotes admin bootstrap follows the same pattern and redirects with a clear
 message if mTools is missing, inactive, or too old.
 
@@ -175,10 +198,20 @@ Install and update hooks run in contexts where preload order is not enough.
 They must load the consumer bootstrap and check the dependency before using
 mTools classes.
 
+The dependency guard goes through the absence-safe shim — mtools may be entirely
+missing in an install context, so call `quotes_mtools_dependency_error()` first
+(it internally uses `ConsumerRuntime`). After presence is confirmed, the
+repetitive filesystem boilerplate (upload folders, blank files, test data,
+dropping tables, purging `.html` templates) collapses into
+`XoopsModules\Mtools\Module\Installer`, driven by the consumer's `Configurator`.
+
 Quotes install hook:
 
 ```php
 require dirname(__DIR__) . '/bootstrap.php';
+
+use XoopsModules\Mtools\Common\Configurator;
+use XoopsModules\Mtools\Module\Installer;
 
 function xoops_module_pre_install_quotes(\XoopsModule $module)
 {
@@ -190,16 +223,52 @@ function xoops_module_pre_install_quotes(\XoopsModule $module)
     }
 
     $utility = new \XoopsModules\Quotes\Utility();
+    if (!$utility::checkVerXoops($module) || !$utility::checkVerPhp($module)) {
+        return false;
+    }
 
-    $xoopsSuccess = $utility::checkVerXoops($module);
-    $phpSuccess   = $utility::checkVerPhp($module);
+    // At (pre-)install the module is not registered yet, so a module Helper cannot resolve
+    // its own path. Build the Configurator from the module dir on disk instead.
+    $configurator = new Configurator(\dirname(__DIR__));
 
-    return $xoopsSuccess && $phpSuccess;
+    Installer::prepare($module, $configurator); // create upload folders + drop tables
+
+    return true;
+}
+
+function xoops_module_install_quotes(\XoopsModule $module)
+{
+    $mtoolsDependencyError = quotes_mtools_dependency_error();
+    if ('' !== $mtoolsDependencyError) {
+        $module->setErrors($mtoolsDependencyError);
+
+        return false;
+    }
+
+    $configurator = new Configurator(\dirname(__DIR__));
+
+    Installer::install($module, $configurator); // folders + blank files + test data + purge .html
+
+    // Module-specific permissions stay in the consumer hook.
+    return true;
 }
 ```
 
-Quotes update hook does the same before it creates `Utility` or
-`Mtools\Common\Configurator`.
+Keep calling the absence-safe `quotes_mtools_dependency_error()` shim in install
+and update hooks: mtools may be entirely missing there, and a class inside mtools
+cannot guard its own non-existence. `ConsumerRuntime::assertReady($module)` is a
+convenience for the same setErrors + `return false` pattern, but only use it in
+contexts where mtools presence is already established (not raw install hooks).
+
+Quotes update hook follows the same shape and may additionally call
+`Installer::removeOldAssets($module, $configurator)` for legacy `.html`
+templates, old files, and old folders. In install/update hooks build the
+`Configurator` with `new Configurator(\dirname(__DIR__))` — NOT
+`Configurator::forModule($helper)`. At install time the module is not registered
+yet, so the Helper cannot resolve its path; `\dirname(__DIR__)` (the hook lives in
+`include/`) always points at the module root. Use `Configurator::forModule($helper)`
+only at runtime (admin pages, blocks, entry points), where the module is active.
+Never call `new Configurator()` with no argument (that path throws).
 
 This is the point that prevents broken partial installs.
 
@@ -242,15 +311,28 @@ Do not keep a copied `class/Common/SysUtility.php` just to avoid changing one
 ## Step 7: Use mTools Helpers Explicitly Where They Are Truly Shared
 
 Quotes uses `Configurator` for module configuration paths and install-time
-folder setup:
+folder setup. At RUNTIME (admin pages, blocks, entry points) build it with the
+named constructor `Configurator::forModule($helper)`. In INSTALL/UPDATE hooks the
+module is not registered yet, so the Helper cannot resolve its path — build it from
+the module dir on disk with `new Configurator(\dirname(__DIR__))`. Never call
+`new Configurator()` with no argument, which throws:
 
 ```php
-$configurator = new \XoopsModules\Mtools\Common\Configurator($helper->path());
+// Runtime (module is active):
+$configurator = \XoopsModules\Mtools\Common\Configurator::forModule($helper);
+// equivalent to: new \XoopsModules\Mtools\Common\Configurator($helper->path());
+
+// Install/update hooks (module not registered yet):
+$configurator = new \XoopsModules\Mtools\Common\Configurator(\dirname(__DIR__));
 
 foreach ($configurator->uploadFolders as $folder) {
     $utility::prepareFolder($folder);
 }
 ```
+
+In install/update hooks you usually do not loop manually — hand the
+`$configurator` to `Module\Installer` (Step 5) and let it create the folders,
+copy blank files, and copy test data.
 
 Use this pattern only for helpers that are documented as stable shared API.
 If a helper needs the consuming module's dirname, path, template name, or URL,
@@ -329,8 +411,13 @@ No consumer class file should require mTools internals directly.
 At minimum, verify these paths:
 
 - module install fails clearly when mTools is missing or inactive
-- module install succeeds when mTools is installed and active
-- module update performs the same dependency check
+- **fresh install succeeds** when mTools is installed and active — test a FROM-SCRATCH
+  install (uninstall first, or use a clean site), NOT a re-install/update over an
+  already-registered module. Install hooks run *before* the module is registered, so
+  helper/path bugs surface only on a genuine first install — this is exactly how the
+  Configurator `\dirname(__DIR__)` install bug slipped through (`ConsumerSmokeTest` does
+  not run the real installer, so it cannot catch this).
+- module update succeeds over a prior version, and performs the same dependency check
 - public index page loads
 - public list/detail pages load
 - admin dashboard loads
@@ -406,12 +493,17 @@ those behaviors before sharing them.
 - [ ] `xoops_version.php` declares `'min_modules' => ['mtools' => '1.1.0']`.
 - [ ] Consumer `bootstrap.php` loads the consumer autoloader and public mTools
       bootstrap.
-- [ ] Consumer has one dependency helper, e.g.
-      `mymodule_mtools_dependency_error()`.
-- [ ] Public/admin entry points check the dependency before using mTools-based
-      classes.
-- [ ] Install and update hooks check the dependency and return `false` with
-      `$module->setErrors()` on failure.
+- [ ] Consumer has one absence-safe dependency shim, e.g.
+      `mymodule_mtools_dependency_error()`, delegating to
+      `Module\ConsumerRuntime::dependencyError()`.
+- [ ] Public/admin entry points check the dependency (shim, or
+      `ConsumerRuntime::guard(XOOPS_URL)` once presence is established) before
+      using mTools-based classes.
+- [ ] Install and update hooks check the dependency via the shim and return
+      `false` with `$module->setErrors()` on failure.
+- [ ] Install/update filesystem boilerplate uses `Module\Installer::prepare()` /
+      `Installer::install()` driven by `new Configurator(\dirname(__DIR__))` (NOT
+      `forModule($helper)` — the module is not registered yet at install time).
 - [ ] Thin local adapters replace copied common base classes.
 - [ ] No class file requires `mtools/preloads/autoloader.php`.
 - [ ] Only documented `Mtools\Common\...` helpers are consumed.
@@ -419,8 +511,11 @@ those behaviors before sharing them.
       consumer module.
 - [ ] Old local `class/Common/` files are removed only after references are
       gone.
-- [ ] Public pages, admin pages, install/update hooks, and blocks are smoke
-      tested.
+- [ ] Public pages, admin pages, and blocks are smoke tested.
+- [ ] **Tested a FRESH (from-scratch) install** — not just a re-install/update over an
+      already-registered module — plus an update over a prior version. Install hooks run
+      before the module is registered, so install-time path/helper bugs only appear on a
+      genuine first install.
 
 ## Recommended Migration Order
 

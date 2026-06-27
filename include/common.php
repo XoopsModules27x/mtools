@@ -46,7 +46,7 @@ if (is_object($helper->getModule())) {
 
 if (!defined($moduleDirNameUpper . '_CONSTANTS_DEFINED')) {
     $modulePath = XOOPS_ROOT_PATH . '/modules/' . $moduleDirName . '/';
-    $moduleUrl  = XOOPS_URL . '/modules/' . $moduleDirName . '/';
+    $moduleUrl  = \Xoops\Helpers\Service\Url::module($moduleDirName) . '/';
     $moduleConstants = [
         $moduleDirNameUpper . '_' . 'DIRNAME'     => basename(dirname(__DIR__)),
         $moduleDirNameUpper . '_ROOT_PATH'        => $modulePath,
@@ -99,7 +99,7 @@ if (is_object($helper->getModule())) {
     $pathModIcon16 = $helper->getModule()->getInfo('modicons16');
     $pathModIcon32 = $helper->getModule()->getInfo('modicons32');
 
-    $GLOBALS['xoopsTpl']->assign('pathModIcon16', XOOPS_URL . '/modules/' . $moduleDirName . '/' . $pathModIcon16);
+    $GLOBALS['xoopsTpl']->assign('pathModIcon16', \Xoops\Helpers\Service\Url::module($moduleDirName, (string) $pathModIcon16));
     $GLOBALS['xoopsTpl']->assign('pathModIcon32', $pathModIcon32);
 }
 

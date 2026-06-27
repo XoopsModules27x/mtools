@@ -2,24 +2,29 @@
 
 namespace XoopsModules\Mtools\Common;
 
+/*
+ You may not change or alter any portion of this comment or credits
+ of supporting developers from this source code or any supporting source code
+ which is considered copyrighted (c) material of the original comment or credit authors.
+*/
+
 /**
- * You may not change or alter any portion of this comment or credits
- * of supporting developers from this source code or any supporting source code
- * which is considered copyrighted (c) material of the original comment or credit authors.
- *
- *
- * @category        Module
- * @author          XOOPS Development Team
- * @copyright       2000-2026 XOOPS Project (https://xoops.org)
- * @link            https://xoops.org
- * @license         GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ * @author    XOOPS Development Team
  */
+
+
 
 use Xmf\Request;
 use Xmf\Module\Helper;
+use Xoops\Helpers\Service\Url;
+use Xoops\Helpers\Utility\HtmlBuilder;
 
 /**
  * class Blocksadmin
+ *
+ * @api Stable Common-tier API (Lab\* is experimental, module-local code is private).
  */
 class Blocksadmin
 {
@@ -86,16 +91,16 @@ class Blocksadmin
         $moduleList[-1] = \_AM_SYSTEM_BLOCKS_TOPPAGE;
         $moduleList[0]  = \_AM_SYSTEM_BLOCKS_ALLPAGES;
         \ksort($moduleList);
-        echo "<h4 style='text-align:left;'>" . \constant('CO_' . $this->moduleDirNameUpper . '_' . 'BADMIN') . '</h4>';
+        echo "<h4 style='text-align:left;'>" . \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'BADMIN') . '</h4>';
         $scriptName = Request::getString('SCRIPT_NAME', '', 'SERVER');
-        echo "<form action='" . \htmlspecialchars($scriptName, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8') . "' name='blockadmin' method='post'>";
+        echo "<form action='" . HtmlBuilder::escape($scriptName) . "' name='blockadmin' method='post'>";
         echo "<table width='100%' class='outer' cellpadding='4' cellspacing='1'>
-        <tr valign='middle'><th align='center'>" . \_AM_SYSTEM_BLOCKS_TITLE . "</th><th align='center' nowrap='nowrap'>" . \constant('CO_' . $this->moduleDirNameUpper . '_' . 'SIDE') . '<br>' . \_LEFT . '-' . \_CENTER . '-' . \_RIGHT . "</th>
-        <th align='center'>" . \constant('CO_' . $this->moduleDirNameUpper . '_' . 'WEIGHT') . "</th>
-        <th align='center'>" . \constant('CO_' . $this->moduleDirNameUpper . '_' . 'VISIBLE') . "</th><th align='center'>" . \_AM_SYSTEM_BLOCKS_VISIBLEIN . "</th>
+        <tr valign='middle'><th align='center'>" . \_AM_SYSTEM_BLOCKS_TITLE . "</th><th align='center' nowrap='nowrap'>" . \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'SIDE') . '<br>' . \_LEFT . '-' . \_CENTER . '-' . \_RIGHT . "</th>
+        <th align='center'>" . \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'WEIGHT') . "</th>
+        <th align='center'>" . \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'VISIBLE') . "</th><th align='center'>" . \_AM_SYSTEM_BLOCKS_VISIBLEIN . "</th>
         <th align='center'>" . \_AM_SYSTEM_ADGS . "</th>
         <th align='center'>" . \_AM_SYSTEM_BLOCKS_BCACHETIME . "</th>
-        <th align='center'>" . \constant('CO_' . $this->moduleDirNameUpper . '_' . 'ACTION') . '</th>
+        <th align='center'>" . \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'ACTION') . '</th>
         </tr>';
         $blockArray = \XoopsBlock::getByModule($xoopsModule->mid());
         $blockCount = \count($blockArray);
@@ -210,7 +215,7 @@ class Blocksadmin
             // Actions
 
             echo "<td class='$class' align='center'>
-                <a href='blocksadmin.php?op=edit&amp;bid=" . $i->getVar('bid') . "'><img src=" . $pathIcon16 . '/edit.png' . " alt='" . \_EDIT . "' title='" . \_EDIT . "'></a> 
+                <a href='blocksadmin.php?op=edit&amp;bid=" . $i->getVar('bid') . "'><img src=" . $pathIcon16 . '/edit.png' . " alt='" . \_EDIT . "' title='" . \_EDIT . "'></a>
                 <a href='blocksadmin.php?op=clone&amp;bid=" . $i->getVar('bid') . "'><img src=" . $pathIcon16 . '/editcopy.png' . " alt='" . \_CLONE . "' title='" . \_CLONE . "'></a>";
             //            if ('S' !== $i->getVar('block_type') && 'M' !== $i->getVar('block_type')) {
             //                echo "&nbsp;<a href='" . XOOPS_URL . '/modules/system/admin.php?fct=blocksadmin&amp;op=delete&amp;bid=' . $i->getVar('bid') . "'><img src=" . $pathIcon16 . '/delete.png' . " alt='" . _DELETE . "' title='" . _DELETE . "'>
@@ -235,7 +240,7 @@ class Blocksadmin
             ";
             $class = ('even' === $class) ? 'odd' : 'even';
         }
-        echo "<tr><td class='foot' align='center' colspan='8'> 
+        echo "<tr><td class='foot' align='center' colspan='8'>
         <input type='hidden' name='op' value='order'>" . $GLOBALS['xoopsSecurity']->getTokenHTML() . "
         <input type='submit' name='submit' value='" . \_SUBMIT . "'>
         </td></tr>
@@ -293,7 +298,7 @@ class Blocksadmin
         $isCustom = \in_array($myblock->getVar('block_type'), ['C', 'E']);
         $block    = [
             'title'      => $myblock->getVar('title') . ' Clone',
-            'form_title' => \constant('CO_' . $this->moduleDirNameUpper . '_' . 'BLOCKS_CLONEBLOCK'),
+            'form_title' => \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'BLOCKS_CLONEBLOCK'),
             'name'       => $myblock->getVar('name'),
             'side'       => $myblock->getVar('side'),
             'weight'     => $myblock->getVar('weight'),
@@ -309,7 +314,7 @@ class Blocksadmin
             'template'   => $myblock->getVar('template'),
             'options'    => $myblock->getVar('options'),
         ];
-        echo '<a href="blocksadmin.php">' . \constant('CO_' . $this->moduleDirNameUpper . '_' . 'BADMIN') . '</a>&nbsp;<span style="font-weight:bold;">&raquo;&raquo;</span>&nbsp;' . \_AM_SYSTEM_BLOCKS_CLONEBLOCK . '<br><br>';
+        echo '<a href="blocksadmin.php">' . \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'BADMIN') . '</a>&nbsp;<span style="font-weight:bold;">&raquo;&raquo;</span>&nbsp;' . \_AM_SYSTEM_BLOCKS_CLONEBLOCK . '<br><br>';
         //        $form = new Blockform();
         //        $form->render();
 
@@ -455,7 +460,7 @@ class Blocksadmin
             'template'   => $myblock->getVar('template'),
             'options'    => $myblock->getVar('options'),
         ];
-        echo '<a href="blocksadmin.php">' . \constant('CO_' . $this->moduleDirNameUpper . '_' . 'BADMIN') . '</a>&nbsp;<span style="font-weight:bold;">&raquo;&raquo;</span>&nbsp;' . \_AM_SYSTEM_BLOCKS_EDITBLOCK . '<br><br>';
+        echo '<a href="blocksadmin.php">' . \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'BADMIN') . '</a>&nbsp;<span style="font-weight:bold;">&raquo;&raquo;</span>&nbsp;' . \_AM_SYSTEM_BLOCKS_EDITBLOCK . '<br><br>';
 
         echo $this->render($block);
     }
@@ -519,7 +524,7 @@ class Blocksadmin
                 $this->db->exec($sql);
             }
         }
-        $this->helper->redirect('admin/blocksadmin.php', 1, \constant('CO_' . $this->moduleDirNameUpper . '_' . 'UPDATE_SUCCESS'));
+        $this->helper->redirect('admin/blocksadmin.php', 1, \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'UPDATE_SUCCESS'));
     }
 
     /**
@@ -598,7 +603,7 @@ class Blocksadmin
             }
         }
 
-        $this->helper->redirect('admin/blocksadmin.php', 1, \constant('CO_' . $this->moduleDirNameUpper . '_' . 'UPDATE_SUCCESS'));
+        $this->helper->redirect('admin/blocksadmin.php', 1, \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'UPDATE_SUCCESS'));
     }
 
     /**
@@ -626,9 +631,9 @@ class Blocksadmin
                                         9 => \_AM_SYSTEM_BLOCKS_CBBOTTOM,
                                     ]);
         $form->addElement($sideSelect);
-        $form->addElement(new \XoopsFormText(\constant('CO_' . $this->moduleDirNameUpper . '_' . 'WEIGHT'), 'bweight', 2, 5, $block['weight']));
-        $form->addElement(new \XoopsFormRadioYN(\constant('CO_' . $this->moduleDirNameUpper . '_' . 'VISIBLE'), 'bvisible', $block['visible']));
-        $modSelect = new \XoopsFormSelect(\constant('CO_' . $this->moduleDirNameUpper . '_' . 'VISIBLEIN'), 'bmodule', $block['modules'], 5, true);
+        $form->addElement(new \XoopsFormText(\constant('_CO_' . $this->moduleDirNameUpper . '_' . 'WEIGHT'), 'bweight', 2, 5, $block['weight']));
+        $form->addElement(new \XoopsFormRadioYN(\constant('_CO_' . $this->moduleDirNameUpper . '_' . 'VISIBLE'), 'bvisible', $block['visible']));
+        $modSelect = new \XoopsFormSelect(\constant('_CO_' . $this->moduleDirNameUpper . '_' . 'VISIBLEIN'), 'bmodule', $block['modules'], 5, true);
         /** @var \XoopsModuleHandler $moduleHandler */
         $moduleHandler = \xoops_getHandler('module');
         $criteria      = new \CriteriaCompo(new \Criteria('hasmain', '1'));
@@ -658,11 +663,11 @@ class Blocksadmin
                 $tplfileHandler = \xoops_getHandler('tplfile');
                 $btemplate      = $tplfileHandler->find($GLOBALS['xoopsConfig']['template_set'], 'block', $block['bid']);
                 if (\count($btemplate) > 0) {
-                    $form->addElement(new \XoopsFormLabel(\_AM_SYSTEM_BLOCKS_CONTENT, '<a href="' . XOOPS_URL . '/modules/system/admin.php?fct=tplsets&amp;op=edittpl&amp;id=' . $btemplate[0]->getVar('tpl_id') . '">' . \_AM_SYSTEM_BLOCKS_EDITTPL . '</a>'));
+                    $form->addElement(new \XoopsFormLabel(\_AM_SYSTEM_BLOCKS_CONTENT, '<a href="' . Url::module('system', 'admin.php?fct=tplsets&amp;op=edittpl&amp;id=' . $btemplate[0]->getVar('tpl_id')) . '">' . \_AM_SYSTEM_BLOCKS_EDITTPL . '</a>'));
                 } else {
                     $btemplate2 = $tplfileHandler->find('default', 'block', $block['bid']);
                     if (\count($btemplate2) > 0) {
-                        $form->addElement(new \XoopsFormLabel(\_AM_SYSTEM_BLOCKS_CONTENT, '<a href="' . XOOPS_URL . '/modules/system/admin.php?fct=tplsets&amp;op=edittpl&amp;id=' . $btemplate2[0]->getVar('tpl_id') . '" target="_blank">' . \_AM_SYSTEM_BLOCKS_EDITTPL . '</a>'));
+                        $form->addElement(new \XoopsFormLabel(\_AM_SYSTEM_BLOCKS_CONTENT, '<a href="' . Url::module('system', 'admin.php?fct=tplsets&amp;op=edittpl&amp;id=' . $btemplate2[0]->getVar('tpl_id')) . '" target="_blank">' . \_AM_SYSTEM_BLOCKS_EDITTPL . '</a>'));
                     }
                 }
             }

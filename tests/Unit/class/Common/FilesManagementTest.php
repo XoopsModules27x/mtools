@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\XoopsModules\Mtools\Common;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use XoopsModules\Mtools\Common\FilesManagement;
 
@@ -11,12 +13,12 @@ use XoopsModules\Mtools\Common\FilesManagement;
  * @copyright XOOPS Project (https://xoops.org)
  * @license GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @author mamba <mambax7@gmail.com>
- *
- * @covers \XoopsModules\Mtools\Common\FilesManagement
  */
+#[CoversClass(\XoopsModules\Mtools\Common\FilesManagement::class)]
+#[Group('legacy')]
 final class FilesManagementTest extends TestCase
 {
-    private FilesManagement $filesManagement;
+    private object $filesManagement;
 
     /**
      * {@inheritdoc}
@@ -25,10 +27,9 @@ final class FilesManagementTest extends TestCase
     {
         parent::setUp();
 
-        /** @todo Correctly instantiate tested object to use it. */
-        $this->filesManagement = $this->getMockBuilder(FilesManagement::class)
-            ->setConstructorArgs([])
-            ->getMockForTrait();
+        $this->filesManagement = new class {
+            use FilesManagement;
+        };
     }
 
     /**

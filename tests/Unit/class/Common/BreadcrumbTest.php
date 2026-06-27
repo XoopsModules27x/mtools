@@ -2,14 +2,16 @@
 
 namespace Tests\Unit\XoopsModules\Mtools\Common;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use XoopsModules\Mtools\Common\Breadcrumb;
 
 /**
  * Class BreadcrumbTest.
- *
- * @covers \XoopsModules\Mtools\Common\Breadcrumb
  */
+#[CoversClass(\XoopsModules\Mtools\Common\Breadcrumb::class)]
+#[Group('legacy')]
 final class BreadcrumbTest extends TestCase
 {
     private Breadcrumb $breadcrumb;

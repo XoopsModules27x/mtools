@@ -1,2 +1,9 @@
-<{assign var=this_file value=$smarty.template|basename|replace:'db:':''}>
-<{include file="$xoops_rootpath/modules/tadtools/templates/blocks/b4.tpl"}>
+<{*
+  This-page QR code block.
+  SHOWCASE: rendered through the xoops/smartyextensions NavigationExtension
+  `render_qr_code` plugin (registered site-wide by system/preloads/smartyextensions.php),
+  not hand-rolled <img> markup. Bootstrap 5.
+*}>
+<div class="text-center">
+    <{render_qr_code text=$block.url size=$block.width}>
+</div>

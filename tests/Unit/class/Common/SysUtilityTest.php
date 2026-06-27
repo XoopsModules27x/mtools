@@ -2,14 +2,16 @@
 
 namespace Tests\Unit\XoopsModules\Mtools\Common;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use XoopsModules\Mtools\Common\SysUtility;
 
 /**
  * Class SysUtilityTest.
- *
- * @covers \XoopsModules\Mtools\Common\SysUtility
  */
+#[CoversClass(\XoopsModules\Mtools\Common\SysUtility::class)]
+#[Group('legacy')]
 final class SysUtilityTest extends TestCase
 {
     private SysUtility $sysUtility;

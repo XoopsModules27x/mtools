@@ -4,12 +4,21 @@
     "description": "Shared helper classes for XOOPS modules; incubation layer before XMF promotion.",
     "license": "GPL-2.0-or-later",
     "require": {
-        "php": ">=8.2 <8.6"
+        "php": ">=8.2 <8.6",
+        "xoops/xmf": "^1.0",
+        "xoops/helpers": "^1.0@beta",
+        "xoops/smartyextensions": "^1.0@beta"
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.64",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
         "pmjones/auto-route": "^2.0",
-        "phpunit/phpunit": "^11.0",
-        "phpstan/phpstan": "^1.11"
+        "phpunit/phpunit": "^10.5 || ^11.0",
+        "rector/rector": "^2.0",
+        "xoops/rector-xoops": "^1.0@alpha"
     },
     "autoload": {
         "psr-4": {
@@ -21,12 +30,27 @@
             "XoopsModules\\Mtools\\Tests\\": "tests/"
         }
     },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
+    },
     "scripts": {
-        "analyse": "phpstan analyse",
-        "unit": "phpunit",
-        "test": [
+        "analyse": "phpstan analyse --configuration=phpstan.neon.dist --memory-limit=512M",
+        "analyse:baseline": "phpstan analyse --configuration=phpstan.neon.dist --generate-baseline=phpstan-baseline.neon --memory-limit=512M",
+        "cs:check": "php-cs-fixer fix --dry-run --diff --config=.php-cs-fixer.dist.php",
+        "cs:fix": "php-cs-fixer fix --config=.php-cs-fixer.dist.php",
+        "rector": "rector process --dry-run",
+        "rector:fix": "rector process",
+        "test": "vendor/bin/phpunit --configuration=phpunit.xml.dist",
+        "test:legacy": "vendor/bin/phpunit --configuration=phpunit.xml.dist --group legacy",
+        "unit": "@test",
+        "qa": [
+            "@cs:check",
             "@analyse",
-            "@unit"
+            "@rector",
+            "@test"
         ]
     }
 }

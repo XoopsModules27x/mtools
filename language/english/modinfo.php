@@ -47,8 +47,3 @@ define('_MI_MTOOLS_QRCODE_BLOCK_NAME', 'This page QR Code');
 define('_MI_MTOOLS_QRCODE_BLOCK_DESC', 'This page QR Code block (mtools_qrcode)');
 define('_MI_MTOOLS_APP_BLOCK_NAME', 'This site App download settings');
 define('_MI_MTOOLS_APP_BLOCK_DESC', 'This site App download settings block (mtools_app)');
-
-define('_MI_MTOOLS_IMAGE_MAX_WIDTH', 'The maximum width of the image uploaded by the CKeditor');
-define('_MI_MTOOLS_IMAGE_MAX_WIDTH_DESC', 'Please fill in the number, the unit is px');
-define('_MI_MTOOLS_IMAGE_MAX_HEIGHT', 'The maximum height of the image uploaded by the CKeditor');
-define('_MI_MTOOLS_IMAGE_MAX_HEIGHT_DESC', 'Please fill in the number, the unit is px');

@@ -2,10 +2,27 @@
 
 namespace XoopsModules\Mtools\Common;
 
+/*
+ You may not change or alter any portion of this comment or credits
+ of supporting developers from this source code or any supporting source code
+ which is considered copyrighted (c) material of the original comment or credit authors.
+*/
+
+/**
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ * @author    XOOPS Development Team
+ */
+
 use Xmf\Database\TableLoad;
 use XoopsModules\Mtools\Helper;
 use XoopsModules\Mtools\Utility;
 
+/**
+ * Class TestdataSample
+ *
+ * @api Stable Common-tier API (Lab\* is experimental, module-local code is private).
+ */
 class TestdataSample
 {
     public $language;
@@ -62,7 +79,7 @@ class TestdataSample
                 $utility::rcopy($src, $dest);
             }
         }
-        \redirect_header($this->modHelper->url('admin/index.php'), 1, \constant('CO_' . $this->moduleDirNameUpper . '_' . 'LOAD_SAMPLEDATA_SUCCESS'));
+        \redirect_header($this->modHelper->url('admin/index.php'), 1, \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'LOAD_SAMPLEDATA_SUCCESS'));
     }
 
     public function saveData(): void
@@ -89,7 +106,7 @@ class TestdataSample
         TableLoad::saveTableToYamlFile('group_permission', $exportFolder . 'group_permission.yml', $criteria, $skipColumns);
         unset($criteria);
 
-        \redirect_header($this->modHelper->url('admin/index.php'), 1, \constant('CO_' . $this->moduleDirNameUpper . '_' . 'LOAD_SAMPLEDATA_SUCCESS'));
+        \redirect_header($this->modHelper->url('admin/index.php'), 1, \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'LOAD_SAMPLEDATA_SUCCESS'));
     }
 
     public function exportSchema(): void
@@ -101,7 +118,7 @@ class TestdataSample
             //
             //        redirect_header('../admin/index.php', 1, constant('_CO_MTOOLS_EXPORT_SCHEMA_SUCCESS'));
         } catch (\Throwable $e) {
-            exit(\constant('CO_' . $this->moduleDirNameUpper . '_' . 'EXPORT_SCHEMA_ERROR'));
+            exit(\constant('_CO_' . $this->moduleDirNameUpper . '_' . 'EXPORT_SCHEMA_ERROR'));
         }
     }
 
@@ -114,7 +131,7 @@ class TestdataSample
         foreach ($tables as $table) {
             \Xmf\Database\TableLoad::truncateTable($table);
         }
-        \redirect_header($this->modHelper->url('admin/index.php'), 1, \constant('CO_' . $this->moduleDirNameUpper . '_' . 'CLEAR_SAMPLEDATA_OK'));
+        \redirect_header($this->modHelper->url('admin/index.php'), 1, \constant('_CO_' . $this->moduleDirNameUpper . '_' . 'CLEAR_SAMPLEDATA_OK'));
     }
 
     /**

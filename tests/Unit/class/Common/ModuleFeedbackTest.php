@@ -2,14 +2,16 @@
 
 namespace Tests\Unit\XoopsModules\Mtools\Common;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use XoopsModules\Mtools\Common\ModuleFeedback;
 
 /**
  * Class ModuleFeedbackTest.
- *
- * @covers \XoopsModules\Mtools\Common\ModuleFeedback
  */
+#[CoversClass(\XoopsModules\Mtools\Common\ModuleFeedback::class)]
+#[Group('legacy')]
 final class ModuleFeedbackTest extends TestCase
 {
     private ModuleFeedback $moduleFeedback;

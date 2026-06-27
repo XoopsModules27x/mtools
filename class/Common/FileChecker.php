@@ -6,23 +6,24 @@ namespace XoopsModules\Mtools\Common;
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
  which is considered copyrighted (c) material of the original comment or credit authors.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- */
+*/
 
 /**
- * Mtools module
- *
- * @copyright       2000-2026 XOOPS Project (https://xoops.org)
- * @license         GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
- * @author          Xoops Development Team
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ * @author    XOOPS Development Team
  */
+
+
+use Xoops\Helpers\Utility\Filesystem;
+use Xoops\Helpers\Utility\HtmlBuilder;
+
 
 /**
  * Class FileChecker
  * check status of a directory
+ *
+ * @api Stable Common-tier API (Lab\* is experimental, module-local code is private).
  */
 class FileChecker
 {
@@ -34,7 +35,7 @@ class FileChecker
      */
     public static function getFileStatus($file_path, $original_file_path = null, $redirectFile = null)
     {
-        global $pathIcon16;
+        $pathIcon16 = \Xmf\Module\Admin::iconUrl('', '16');
 
         if (empty($file_path)) {
             return false;
@@ -73,7 +74,7 @@ class FileChecker
             return false;
         }
 
-        return @\copy($source_path, $destination_path);
+        return Filesystem::copy((string)$source_path, (string)$destination_path);
     }
 
     /**
@@ -193,13 +194,13 @@ class FileChecker
 
     private static function message(string $suffix, string $fallback): string
     {
-        $constant = 'CO_MTOOLS_' . $suffix;
+        $constant = '_CO_MTOOLS_' . $suffix;
 
         return defined($constant) ? (string)constant($constant) : $fallback;
     }
 
     private static function escape(string $value): string
     {
-        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        return HtmlBuilder::escape($value);
     }
 }

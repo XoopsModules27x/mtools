@@ -2,8 +2,9 @@
 
 namespace Tests\Unit\XoopsModules\Mtools\Common;
 
-use Mockery;
-use Mockery\Mock;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use XoopsDatabase;
 use XoopsModules\Mtools\Common\Blocksadmin;
@@ -11,16 +12,16 @@ use XoopsModules\Mtools\Helper;
 
 /**
  * Class BlocksadminTest.
- *
- * @covers \XoopsModules\Mtools\Common\Blocksadmin
  */
+#[CoversClass(\XoopsModules\Mtools\Common\Blocksadmin::class)]
+#[Group('legacy')]
 final class BlocksadminTest extends TestCase
 {
     private Blocksadmin $blocksadmin;
 
-    private XoopsDatabase|Mock $db;
+    private XoopsDatabase|MockObject $db;
 
-    private Helper|Mock $helper;
+    private Helper|MockObject $helper;
 
     /**
      * {@inheritdoc}
@@ -29,8 +30,9 @@ final class BlocksadminTest extends TestCase
     {
         parent::setUp();
 
-        $this->db = Mockery::mock(XoopsDatabase::class);
-        $this->helper = Mockery::mock(Helper::class);
+        // Use PHPUnit's native test doubles so the suite has no undeclared Mockery dependency.
+        $this->db = $this->createMock(XoopsDatabase::class);
+        $this->helper = $this->createMock(Helper::class);
         $this->blocksadmin = new Blocksadmin($this->db, $this->helper);
     }
 

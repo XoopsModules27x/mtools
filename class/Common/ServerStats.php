@@ -16,6 +16,8 @@ namespace XoopsModules\Mtools\Common;
  * @copyright   2000-2026 XOOPS Project (https://xoops.org)
  * @license     GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @author      mamba <mambax7@gmail.com>
+ *
+ * @api Stable Common-tier API (Lab\* is experimental, module-local code is private).
  */
 trait ServerStats
 {

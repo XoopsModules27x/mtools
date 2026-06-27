@@ -2,17 +2,19 @@
 
 namespace Tests\Unit;
 
-use IdentityMapTrait;
+use XoopsModules\Mtools\Lab\IdentityMapTrait;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Class IdentityMapTraitTest.
- *
- * @covers \IdentityMapTrait
  */
+#[CoversClass(\XoopsModules\Mtools\Lab\IdentityMapTrait::class)]
+#[Group('legacy')]
 final class IdentityMapTraitTest extends TestCase
 {
-    private IdentityMapTrait $identityMapTrait;
+    private object $identityMapTrait;
 
     /**
      * {@inheritdoc}
@@ -21,9 +23,9 @@ final class IdentityMapTraitTest extends TestCase
     {
         parent::setUp();
 
-        $this->identityMapTrait = $this->getMockBuilder(IdentityMapTrait::class)
-            ->setConstructorArgs([])
-            ->getMockForTrait();
+        $this->identityMapTrait = new class {
+            use IdentityMapTrait;
+        };
     }
 
     /**

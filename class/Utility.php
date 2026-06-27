@@ -8,8 +8,6 @@ use XoopsModules\Mtools\Constants;
 
 use Xmf\Request;
 
-// use XoopsModules\Tadtools\PageBar;
-
 /*
 Utility Class Definition
 
@@ -74,6 +72,8 @@ class Utility extends Common\SysUtility
         } else {
             $xoTheme->addScript('modules/mtools/jquery/jquery-migrate-1.4.1.min.js');
         }
+
+        return null;
     }
 
     //版本判斷 Get version
@@ -293,18 +293,19 @@ class Utility extends Common\SysUtility
     public static function web_error($sql, $file = '', $line = '', $force = false): void
     {
         global $xoopsDB, $xoopsModule, $xoopsUser;
-        \xoops_loadLanguage('main', 'tadtools');
+        $oops    = \defined('_MA_MTOOLS_OOPS') ? _MA_MTOOLS_OOPS : 'Oops! Something went wrong.';
+        $back    = \defined('_MA_MTOOLS_BACK_PAGE') ? _MA_MTOOLS_BACK_PAGE : 'Back';
         $isAdmin = ($xoopsUser and $xoopsModule) ? $xoopsUser->isAdmin($xoopsModule->mid()) : false;
 
         $in_admin = (false !== mb_strpos($_SERVER['PHP_SELF'], '/admin/')) ? true : false;
-        $main     = '<h1>' . _TAD_OOPS_SOMETHING_WRONG . '</h1>';
+        $main     = '<h1>' . $oops . '</h1>';
 
         if ($isAdmin or $in_admin or $force) {
             $main .= "<div class='well'>{$sql}</div>";
         }
 
         $show_position = ($file) ? "<br>{$file}:{$line}" : '';
-        $main          .= "<div class='alert alert-danger'>" . $xoopsDB->error() . $show_position . "</div><div class='text-center'><a href='javascript:history.go(-1);' class='btn btn-primary'>" . _TAD_BACK_PAGE . '</a></div>';
+        $main          .= "<div class='alert alert-danger'>" . $xoopsDB->error() . $show_position . "</div><div class='text-center'><a href='javascript:history.go(-1);' class='btn btn-primary'>" . $back . '</a></div>';
 
         die(self::html5($main));
     }
@@ -800,7 +801,13 @@ class Utility extends Common\SysUtility
             \array_map('\rrmdir', \glob($path . '/*')) == @\rmdir($path);
     }
 
-    //取得分頁工具 Get the pagination tool
+    /**
+     * Get the pagination tool.
+     *
+     * @deprecated Since the xoops/smartyextensions adoption: render pagination in
+     *             templates with the `render_pagination` Smarty plugin (Bootstrap 5).
+     *             Retained for BC; delegates to the self-contained Common\Paginator.
+     */
     public static function getPageBar($sql = '', $show_num = 20, $page_list = 10, $to_page = '', $url_other = '', $bootstrap = '3'): array
     {
         global $xoopsDB;
@@ -819,14 +826,14 @@ class Utility extends Common\SysUtility
         $result = $xoopsDB->query($sql) or \redirect_header($_SERVER['SCRIPT_NAME'], 10, $xoopsDB->error() . '<br>' . __FILE__ . ':' . __LINE__ . "<br>$sql");
         $total = $xoopsDB->getRowsNum($result);
 
-        $navbar = new \XoopsModules\Tadtools\PageBar($total, $show_num, $page_list);
+        $navbar = new Common\Paginator((int) $total, (int) $show_num, (int) $page_list);
 
         if (!empty($to_page)) {
-            $navbar->set_to_page($to_page);
+            $navbar->setToPage((string) $to_page);
         }
 
         if (!empty($url_other)) {
-            $navbar->set_url_other($url_other);
+            $navbar->setUrlOther((string) $url_other);
         }
 
         if ('3' == $bootstrap or '4' == $bootstrap) {
@@ -857,7 +864,11 @@ class Utility extends Common\SysUtility
     {
         global $xoopsUser, $xoopsModule, $xoopsModuleConfig;
 
-        \xoops_loadLanguage('main', 'tadtools');
+        $homeLabel   = \defined('_MA_MTOOLS_HOME') ? _MA_MTOOLS_HOME : 'Home';
+        $adminLabel  = \defined('_MA_MTOOLS_ADMIN') ? _MA_MTOOLS_ADMIN : 'Administer %s';
+        $configLabel = \defined('_MA_MTOOLS_CONFIG') ? _MA_MTOOLS_CONFIG : 'Configure %s';
+        $updateLabel = \defined('_MA_MTOOLS_UPDATE') ? _MA_MTOOLS_UPDATE : 'Update %s';
+        $blocksLabel = \defined('_MA_MTOOLS_BLOCKS') ? _MA_MTOOLS_BLOCKS : 'Blocks for %s';
         $op = Request::getString('op');
 
         if ($xoopsModule) {
@@ -882,7 +893,7 @@ class Utility extends Common\SysUtility
 
         self::get_jquery();
 
-        $options = "<li><a href='index.php' title='" . _TAD_HOME . "'><i class='fa fa-home'></i></a></li>";
+        $options = "<li><a href='index.php' title='" . $homeLabel . "'><i class='fa fa-home'></i></a></li>";
         if (\is_array($interface_menu)) {
             $basename = \basename($_SERVER['SCRIPT_NAME']);
             if (1 == \count($interface_menu) and 'index.php' === mb_substr($_SERVER['REQUEST_URI'], -9)) {
@@ -906,10 +917,10 @@ class Utility extends Common\SysUtility
             }
 
             if ($isAdmin and $module_id) {
-                $options .= "<li {$active}><a href='admin/index.php' title='" . \sprintf(_TAD_ADMIN, $mod_name) . "'><i class='fa fa-wrench'></i></a></li>";
-                $options .= "<li {$active}><a href='" . XOOPS_URL . "/modules/system/admin.php?fct=preferences&op=showmod&mod={$module_id}' title='" . \sprintf(_TAD_CONFIG, $mod_name) . "'><i class='fa fa-edit'></i></a></li>";
-                $options .= "<li {$active}><a href='" . XOOPS_URL . "/modules/system/admin.php?fct=modulesadmin&op=update&module={$moduleName}' title='" . \sprintf(_TAD_UPDATE, $mod_name) . "'><i class='fa fa-refresh'></i></a></li>";
-                $options .= "<li {$active}><a href='" . XOOPS_URL . "/modules/system/admin.php?fct=blocksadmin&op=list&filter=1&selgen={$module_id}&selmod=-2&selgrp=-1&selvis=-1' title='" . \sprintf(_TAD_BLOCKS, $mod_name) . "'><i class='fa fa-th'></i></a></li>";
+                $options .= "<li {$active}><a href='admin/index.php' title='" . \sprintf($adminLabel, $mod_name) . "'><i class='fa fa-wrench'></i></a></li>";
+                $options .= "<li {$active}><a href='" . XOOPS_URL . "/modules/system/admin.php?fct=preferences&op=showmod&mod={$module_id}' title='" . \sprintf($configLabel, $mod_name) . "'><i class='fa fa-edit'></i></a></li>";
+                $options .= "<li {$active}><a href='" . XOOPS_URL . "/modules/system/admin.php?fct=modulesadmin&op=update&module={$moduleName}' title='" . \sprintf($updateLabel, $mod_name) . "'><i class='fa fa-refresh'></i></a></li>";
+                $options .= "<li {$active}><a href='" . XOOPS_URL . "/modules/system/admin.php?fct=blocksadmin&op=list&filter=1&selgen={$module_id}&selmod=-2&selgrp=-1&selvis=-1' title='" . \sprintf($blocksLabel, $mod_name) . "'><i class='fa fa-th'></i></a></li>";
             }
         } else {
             return;
@@ -963,20 +974,6 @@ class Utility extends Common\SysUtility
         file_put_contents($filename, $json);
     }
 
-    public static function TadToolsXoopsModuleConfig(): bool
-    {
-        $moduleHandler  = \xoops_getHandler('module');
-        $TadToolsModule = $moduleHandler->getByDirname('tadtools');
-        if (\is_object($TadToolsModule)) {
-            $configHandler        = \xoops_getHandler('config');
-            $TadToolsModuleConfig = $configHandler->getConfigsByCat(0, $TadToolsModule->getVar('mid'));
-
-            return $TadToolsModuleConfig;
-        }
-
-        return false;
-    }
-
     public static function get_jquery($ui = false, $mode = '', $theme = 'base'): ?string
     {
         global $xoTheme;
@@ -1023,6 +1020,8 @@ class Utility extends Common\SysUtility
             $xoTheme->addScript('browse.php?Frameworks/jquery/plugins/jquery.ui.js');
             $xoTheme->addScript('modules/mtools/jquery/jquery.ui.touch-punch.min.js');
         }
+
+        return null;
     }
 
     public static function mobile_device_detect($iphone = true, $ipad = true, $android = true, $opera = true, $blackberry = true, $palm = true, $windows = true, $mobileredirect = false, $desktopredirect = false)

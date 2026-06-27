@@ -4,19 +4,14 @@
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
  which is considered copyrighted (c) material of the original comment or credit authors.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
+
 /**
- * Module: Quotes
- *
- * @category        Module
- * @author          XOOPS Development Team <https://xoops.org>
- * @copyright       2000-2026 XOOPS Project (https://xoops.org)
- * @license         GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ * @author    XOOPS Development Team
  */
+
 
 // Main
 define('MB_MTOOLS_DISPLAY', 'How Many Tables to Display');
@@ -42,3 +37,7 @@ define('MB_MTOOLS_NAME', 'Name');
 define('MB_MTOOLS_COUNTRY', 'Country');
 define('MB_MTOOLS_BIO', 'Bio');
 define('MB_MTOOLS_PHOTO', 'Photo');
+
+// App download block (self-contained; replaces the former tadtools _MB_TT_* constants)
+define('_MB_MTOOLS_APP_DOWNLOAD', 'Scan to download the App');
+define('_MB_MTOOLS_APP_SETUP', 'Scan to open this site');

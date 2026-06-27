@@ -16,6 +16,8 @@ namespace XoopsModules\Mtools\Common;
  * @copyright   2000-2026 XOOPS Project (https://xoops.org)
  * @license     GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @author      mamba <mambax7@gmail.com>
+ *
+ * @api Stable Common-tier API (Lab\* is experimental, module-local code is private).
  */
 trait VersionChecks
 {
@@ -35,7 +37,7 @@ trait VersionChecks
         $moduleDirNameUpper = \mb_strtoupper($moduleDirName);
         $errorConstant      = '_CO_MTOOLS_ERROR_BAD_XOOPS';
         if (!defined($errorConstant)) {
-            $errorConstant = 'CO_MTOOLS_ERROR_BAD_XOOPS';
+            $errorConstant = '_CO_MTOOLS_ERROR_BAD_XOOPS';
         }
         \xoops_loadLanguage('admin', $moduleDirName);
         \xoops_loadLanguage('common', $moduleDirName);
@@ -71,7 +73,7 @@ trait VersionChecks
         $moduleDirNameUpper = \mb_strtoupper($moduleDirName);
         $errorConstant      = '_CO_MTOOLS_ERROR_BAD_PHP';
         if (!defined($errorConstant)) {
-            $errorConstant = 'CO_MTOOLS_ERROR_BAD_PHP';
+            $errorConstant = '_CO_MTOOLS_ERROR_BAD_PHP';
         }
         \xoops_loadLanguage('admin', $moduleDirName);
         \xoops_loadLanguage('common', $moduleDirName);

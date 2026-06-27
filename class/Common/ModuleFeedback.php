@@ -6,10 +6,6 @@ namespace XoopsModules\Mtools\Common;
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
  which is considered copyrighted (c) material of the original comment or credit authors.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 
 /**
@@ -22,8 +18,12 @@ namespace XoopsModules\Mtools\Common;
  * @author         Fernando Santos (topet05) <fernando@mastop.com.br>
  */
 
+use Xoops\Helpers\Utility\HtmlBuilder;
+
 /**
  * Class Object ModuleFeedback
+ *
+ * @api Stable Common-tier API (Lab\* is experimental, module-local code is private).
  */
 class ModuleFeedback extends \XoopsObject
 {
@@ -83,13 +83,13 @@ class ModuleFeedback extends \XoopsObject
         $recipient->setExtra('disabled="disabled"');
         $form->addElement($recipient);
         $your_name = new \XoopsFormText($this->constantValue($moduleDirNameUpper, 'FB_NAME', 'Name'), 'your_name', 50, 255, $this->name);
-        $your_name->setExtra('placeholder="' . \htmlspecialchars($this->constantValue($moduleDirNameUpper, 'FB_NAME_PLACEHOLER', 'Your name'), \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8') . '"');
+        $your_name->setExtra('placeholder="' . HtmlBuilder::escape($this->constantValue($moduleDirNameUpper, 'FB_NAME_PLACEHOLER', 'Your name')) . '"');
         $form->addElement($your_name);
         $your_site = new \XoopsFormText($this->constantValue($moduleDirNameUpper, 'FB_SITE', 'Website'), 'your_site', 50, 255, $this->site);
-        $your_site->setExtra('placeholder="' . \htmlspecialchars($this->constantValue($moduleDirNameUpper, 'FB_SITE_PLACEHOLER', 'Your website'), \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8') . '"');
+        $your_site->setExtra('placeholder="' . HtmlBuilder::escape($this->constantValue($moduleDirNameUpper, 'FB_SITE_PLACEHOLER', 'Your website')) . '"');
         $form->addElement($your_site);
         $your_mail = new \XoopsFormText($this->constantValue($moduleDirNameUpper, 'FB_MAIL', 'Email'), 'your_mail', 50, 255, $this->email);
-        $your_mail->setExtra('placeholder="' . \htmlspecialchars($this->constantValue($moduleDirNameUpper, 'FB_MAIL_PLACEHOLER', 'Your email'), \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8') . '"');
+        $your_mail->setExtra('placeholder="' . HtmlBuilder::escape($this->constantValue($moduleDirNameUpper, 'FB_MAIL_PLACEHOLER', 'Your email')) . '"');
         $form->addElement($your_mail);
 
         $fbtypeSelect = new \XoopsFormSelect($this->constantValue($moduleDirNameUpper, 'FB_TYPE', 'Type'), 'fb_type', $this->type);

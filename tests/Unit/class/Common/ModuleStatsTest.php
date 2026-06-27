@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\XoopsModules\Mtools\Common;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use XoopsModules\Mtools\Common\ModuleStats;
 
@@ -11,12 +13,12 @@ use XoopsModules\Mtools\Common\ModuleStats;
  * @copyright 2000-2026 XOOPS Project (https://xoops.org)
  * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @author    Michael Beck <mambax7@gmail.com>
- *
- * @covers \XoopsModules\Mtools\Common\ModuleStats
  */
+#[CoversClass(\XoopsModules\Mtools\Common\ModuleStats::class)]
+#[Group('legacy')]
 final class ModuleStatsTest extends TestCase
 {
-    private ModuleStats $moduleStats;
+    private object $moduleStats;
 
     /**
      * {@inheritdoc}
@@ -25,10 +27,9 @@ final class ModuleStatsTest extends TestCase
     {
         parent::setUp();
 
-        /** @todo Correctly instantiate tested object to use it. */
-        $this->moduleStats = $this->getMockBuilder(ModuleStats::class)
-            ->setConstructorArgs([])
-            ->getMockForTrait();
+        $this->moduleStats = new class {
+            use ModuleStats;
+        };
     }
 
     /**

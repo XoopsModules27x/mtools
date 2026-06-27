@@ -33,18 +33,57 @@ CLI scripts, and tests load the module bootstrap instead.
 
 ## Dependency Check
 
-Before instantiating classes that extend mtools helpers:
+All the version-check and message logic now lives in
+`\XoopsModules\Mtools\Module\ConsumerRuntime`. A consumer keeps just ONE tiny
+absence-safe shim — `include/<dirname>_mtools_dependency.php` — that guards the
+case where mtools is *entirely absent* (a class inside mtools cannot report its
+own non-existence) and otherwise delegates to `ConsumerRuntime`:
 
 ```php
-$status = \XoopsModules\Mtools\Bootstrap::checkRuntime('1.0.0', '1.1.0');
-if (!$status['ok']) {
-    $module->setErrors(\XoopsModules\Mtools\Bootstrap::statusMessage($status));
+use XoopsModules\Mtools\Module\ConsumerRuntime;
+
+if (!function_exists('quotes_mtools_dependency_error')) {
+    function quotes_mtools_dependency_error(): string
+    {
+        if (!class_exists(ConsumerRuntime::class)) {
+            return 'The mtools module files are missing. Install mtools before installing or running Quotes.';
+        }
+
+        return ConsumerRuntime::dependencyError('1.0.0', '1.1.0');
+    }
+}
+```
+
+Under the hood `ConsumerRuntime::dependencyError()` wraps the low-level primitive
+`\XoopsModules\Mtools\Bootstrap::checkRuntime()` + `Bootstrap::statusMessage()` —
+consumers should not call those directly anymore.
+
+### Active vs installed
+
+**mtools only needs to be INSTALLED and version-compatible — it does NOT need to be
+active.** Your `bootstrap.php` loads mtools' helper classes directly by file path, so they
+work whether mtools is active or not; the dependency check therefore accepts an
+installed-but-inactive mtools (matching XOOPS's own `min_modules` semantics). If your
+module additionally relies on a feature that only exists while mtools is active, opt in
+with `Bootstrap::checkRuntime($api, $version, requireActive: true)`.
+
+Once `bootstrap.php` has run and mtools' presence is therefore established, use
+the shared guards directly for each context:
+
+```php
+// Public / admin entry point (XOOPS loaded): redirect + stop on failure.
+ConsumerRuntime::guard(XOOPS_URL);
+
+// Install / update hook: record the error on the module and bail.
+if (!ConsumerRuntime::assertReady($module)) {
     return false;
 }
 ```
 
-Admin entry points should redirect with the same message. Install/update hooks
-should return `false`.
+`guard()` / `assertReady()` assume mtools' files are present (the bootstrap shim
+already handled total absence). The absence-safe `<dirname>_mtools_dependency_error()`
+shim is what entry points and hooks call first; `guard()`/`assertReady()` are for
+contexts where presence is already established.
 
 ## Reusing Helpers
 

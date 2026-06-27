@@ -2,16 +2,20 @@
 
 namespace Tests\Unit\XoopsModules\Mtools;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use XoopsModules\Mtools\Helper;
 
 /**
  * Class HelperTest.
- *
- * @covers \XoopsModules\Mtools\Helper
  */
+#[CoversClass(\XoopsModules\Mtools\Helper::class)]
+#[Group('legacy')]
 final class HelperTest extends TestCase
 {
+    use \RequiresXoops;
+
     private Helper $helper;
 
     private bool $debug;
@@ -22,6 +26,8 @@ final class HelperTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->requiresXoops();
 
         $this->debug = true;
         $this->helper = new Helper($this->debug);

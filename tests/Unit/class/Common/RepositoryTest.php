@@ -2,14 +2,16 @@
 
 namespace Tests\Unit;
 
-use Repository;
+use XoopsModules\Mtools\Lab\Repository;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Class RepositoryTest.
- *
- * @covers \Repository
  */
+#[CoversClass(\XoopsModules\Mtools\Lab\Repository::class)]
+#[Group('legacy')]
 final class RepositoryTest extends TestCase
 {
     private Repository $repository;

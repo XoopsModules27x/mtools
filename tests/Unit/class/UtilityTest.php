@@ -2,24 +2,34 @@
 
 namespace Tests\Unit\XoopsModules\Mtools;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use XoopsModules\Mtools\Utility;
 
 /**
  * Class UtilityTest.
- *
- * @covers \XoopsModules\Mtools\Utility
  */
+#[CoversClass(\XoopsModules\Mtools\Utility::class)]
+#[Group('legacy')]
 final class UtilityTest extends TestCase
 {
+    use \RequiresXoops;
+
     private Utility $utility;
 
     /**
+     * Utility's constructor reaches into the live XOOPS runtime (e.g.
+     * $GLOBALS['xoopsDB']->prefix()), so these tests need a booted XOOPS and
+     * self-skip in unit-only mode rather than erroring.
+     *
      * {@inheritdoc}
      */
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->requiresXoops();
 
         $this->utility = new Utility();
     }
@@ -257,12 +267,6 @@ final class UtilityTest extends TestCase
     }
 
     public function testMake_menu_json(): void
-    {
-        /** @todo This test is incomplete. */
-        $this->markTestIncomplete();
-    }
-
-    public function testTadToolsXoopsModuleConfig(): void
     {
         /** @todo This test is incomplete. */
         $this->markTestIncomplete();

@@ -6,23 +6,26 @@ namespace XoopsModules\Mtools\Common;
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
  which is considered copyrighted (c) material of the original comment or credit authors.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- */
+*/
 
 /**
- * Mtools module
- *
- * @copyright       2000-2026 XOOPS Project (https://xoops.org)
- * @license         GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
- * @author          Xoops Development Team
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ * @author    XOOPS Development Team
  */
+
+
+use Xoops\Helpers\Utility\Filesystem;
+use Xoops\Helpers\Utility\HtmlBuilder;
+
+
+
 
 /**
  * Class DirectoryChecker
  * check status of a directory
+ *
+ * @api Stable Common-tier API (Lab\* is experimental, module-local code is private).
  */
 class DirectoryChecker
 {
@@ -83,7 +86,7 @@ class DirectoryChecker
         // https://www.php.net/manual/en/function.mkdir.php
         return \is_dir($target)
             || (self::createDirectory(\dirname($target), $mode, $allowedBasePath)
-                && (@\mkdir($target, self::normalizeMode($mode, 0755)) || \is_dir($target)));
+                && (Filesystem::mkdir($target, self::normalizeMode($mode, 0755), false) || \is_dir($target)));
     }
 
     /**
@@ -181,13 +184,13 @@ class DirectoryChecker
 
     private static function message(string $suffix, string $fallback): string
     {
-        $constant = 'CO_MTOOLS_' . $suffix;
+        $constant = '_CO_MTOOLS_' . $suffix;
 
         return defined($constant) ? (string)constant($constant) : $fallback;
     }
 
     private static function escape(string $value): string
     {
-        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        return HtmlBuilder::escape($value);
     }
 }

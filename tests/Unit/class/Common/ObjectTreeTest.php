@@ -1,38 +1,34 @@
 <?php
 
-namespace Tests\Unit\XoopsModules\Quotes\Common;
+namespace Tests\Unit\XoopsModules\Mtools\Common;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use XoopsModules\Quotes\Common\ObjectTree;
+use XoopsModules\Mtools\Common\ObjectTree;
 
 /**
  * Class ObjectTreeTest.
- *
- * @covers \XoopsModules\Quotes\Common\ObjectTree
  */
+#[CoversClass(\XoopsModules\Mtools\Common\ObjectTree::class)]
+#[Group('legacy')]
 final class ObjectTreeTest extends TestCase
 {
-    private ObjectTree $objectTree;
+    use \RequiresXoops;
 
     /**
+     * ObjectTree extends \XoopsObjectTree, so it can only be exercised once a real
+     * XOOPS runtime is booted; self-skip in unit-only mode rather than fataling.
+     *
      * {@inheritdoc}
      */
     protected function setUp(): void
     {
         parent::setUp();
 
-        /** @todo Correctly instantiate tested object to use it. */
-        $this->objectTree = new ObjectTree();
-    }
+        $this->requiresXoops();
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        unset($this->objectTree);
+        /** @todo Instantiate with a populated object array once these tests are implemented. */
     }
 
     public function testMakeSelBoxOptionsArray(): void

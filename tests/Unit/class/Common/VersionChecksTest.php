@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\XoopsModules\Mtools\Common;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use XoopsModules\Mtools\Common\VersionChecks;
 
@@ -11,12 +13,12 @@ use XoopsModules\Mtools\Common\VersionChecks;
  * @copyright XOOPS Project (https://xoops.org)
  * @license GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @author mamba <mambax7@gmail.com>
- *
- * @covers \XoopsModules\Mtools\Common\VersionChecks
  */
+#[CoversClass(\XoopsModules\Mtools\Common\VersionChecks::class)]
+#[Group('legacy')]
 final class VersionChecksTest extends TestCase
 {
-    private VersionChecks $versionChecks;
+    private object $versionChecks;
 
     /**
      * {@inheritdoc}
@@ -25,10 +27,9 @@ final class VersionChecksTest extends TestCase
     {
         parent::setUp();
 
-        /** @todo Correctly instantiate tested object to use it. */
-        $this->versionChecks = $this->getMockBuilder(VersionChecks::class)
-            ->setConstructorArgs([])
-            ->getMockForTrait();
+        $this->versionChecks = new class {
+            use VersionChecks;
+        };
     }
 
     /**

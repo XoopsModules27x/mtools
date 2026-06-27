@@ -1,4 +1,5 @@
 @ECHO OFF
 setlocal DISABLEDELAYEDEXPANSION
-SET BIN_TARGET=%~dp0/../pmjones/auto-route/bin/autoroute-dump.php
+SET BIN_TARGET=%~dp0/autoroute-dump.php
+SET COMPOSER_RUNTIME_BIN_DIR=%~dp0
 php "%BIN_TARGET%" %*

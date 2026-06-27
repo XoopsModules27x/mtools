@@ -2,14 +2,16 @@
 
 namespace Tests\Unit\XoopsModules\Mtools\Common;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use XoopsModules\Mtools\Common\FileChecker;
 
 /**
  * Class FileCheckerTest.
- *
- * @covers \XoopsModules\Mtools\Common\FileChecker
  */
+#[CoversClass(\XoopsModules\Mtools\Common\FileChecker::class)]
+#[Group('legacy')]
 final class FileCheckerTest extends TestCase
 {
     private FileChecker $fileChecker;

@@ -1,5 +1,16 @@
 <?php declare(strict_types=1);
 
+/*
+ You may not change or alter any portion of this comment or credits
+ of supporting developers from this source code or any supporting source code
+ which is considered copyrighted (c) material of the original comment or credit authors.
+*/
+/**
+ * @author          XOOPS Development Team <https://xoops.org>
+ * @copyright       2000-2026 XOOPS Project (https://xoops.org)
+ * @license         GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ */
+
 global $xoopsConfig;
 
 $moduleDirName      = basename(__DIR__);
@@ -7,9 +18,9 @@ $moduleDirNameUpper = \mb_strtoupper($moduleDirName);
 
 // ------------------- Information -------------------
 $modversion = [
-    'version'             => '1.1.0',
+    'version'             => '1.2.0',
     'module_status'       => 'Beta 1',
-    'release_date'        => '2021/02/19',
+    'release_date'        => '2026/06/18',
     'name'                => _MI_MTOOLS_NAME,
     'description'         => _MI_MTOOLS_DESC,
     'official'            => 0,    //1 indicates official XOOPS module supported by XOOPS Dev Team, 0 means 3rd party supported
@@ -72,23 +83,4 @@ $modversion['helpsection'] = [
 // ------------------- Templates -------------------
 $modversion['templates'] = [
     ['file' => 'mtools_adm_index.tpl', 'description' => 'mtools_adm_index.tpl'],
-];
-
-// ------------------- Config Options -------------------
-$modversion['config'][] = [
-    'name'        => 'image_max_width',
-    'title'       => '_MI_MTOOLS_IMAGE_MAX_WIDTH',
-    'description' => '_MI_MTOOLS_IMAGE_MAX_WIDTH_DESC',
-    'formtype'    => 'textbox',
-    'valuetype'   => 'int',
-    'default'     => '1280',
-];
-
-$modversion['config'][] = [
-    'name'        => 'image_max_height',
-    'title'       => '_MI_MTOOLS_IMAGE_MAX_HEIGHT',
-    'description' => '_MI_MTOOLS_IMAGE_MAX_HEIGHT_DESC',
-    'formtype'    => 'textbox',
-    'valuetype'   => 'int',
-    'default'     => '1280',
 ];

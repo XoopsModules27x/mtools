@@ -6,16 +6,31 @@ namespace XoopsModules\Mtools\Common;
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
  which is considered copyrighted (c) material of the original comment or credit authors.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- */
+*/
 
 /**
- * @copyright   2000-2026 XOOPS Project (https://xoops.org)
- * @license     GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
- * @author      mamba <mambax7@gmail.com>
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ * @author    XOOPS Development Team
+ */
+
+
+use Xoops\Helpers\Utility\Filesystem;
+
+/**
+ * Filesystem convenience methods mixed into {@see SysUtility}.
+ *
+ * This is now a THIN WRAPPER: every recursive/heavy operation delegates to
+ * {@see \Xoops\Helpers\Utility\Filesystem} (`mkdir`, `copy`, `copyDirectory`,
+ * `deleteDirectory`, `moveDirectory`); the trait only adds XOOPS-flavoured glue
+ * (safe-path guards, the `index.html` drop). It is kept because consumers extend
+ * `SysUtility` and call `$utility::createFolder()` / `copyFile()` / `rcopy()`.
+ *
+ * NEW code should prefer:
+ *   - `Xoops\Helpers\Utility\Filesystem` directly for file/dir operations, and
+ *   - {@see DirectoryChecker} / {@see FileChecker} for guarded existence/permission checks.
+ *
+ * @api Stable Common-tier API (Lab\* is experimental, module-local code is private).
  */
 trait FilesManagement
 {
@@ -34,7 +49,7 @@ trait FilesManagement
         }
 
         if (!\is_dir($folder)) {
-            if (!@\mkdir($folder, 0755, true) && !\is_dir($folder)) {
+            if (!Filesystem::mkdir($folder, 0755) && !\is_dir($folder)) {
                 throw new \RuntimeException(\sprintf('Unable to create the %s directory', $folder));
             }
         }
@@ -56,7 +71,7 @@ trait FilesManagement
             return false;
         }
 
-        return \copy($file, $folder);
+        return Filesystem::copy($file, $folder);
     }
 
     /**
@@ -69,25 +84,13 @@ trait FilesManagement
             throw new \RuntimeException('Refusing unsafe copy path.');
         }
 
-        $dir = \opendir($src);
-        if (false === $dir) {
+        if (!\is_dir($src)) {
             throw new \RuntimeException('The directory ' . $src . ' could not be opened.');
         }
 
-        if (!\is_dir($dst) && !@\mkdir($dst, 0755, true) && !\is_dir($dst)) {
+        if (!Filesystem::copyDirectory((string)$src, (string)$dst)) {
             throw new \RuntimeException('The directory ' . $dst . ' could not be created.');
         }
-
-        while (false !== ($file = \readdir($dir))) {
-            if (('.' !== $file) && ('..' !== $file)) {
-                if (\is_dir($src . '/' . $file)) {
-                    self::recurseCopy($src . '/' . $file, $dst . '/' . $file);
-                } else {
-                    \copy($src . '/' . $file, $dst . '/' . $file);
-                }
-            }
-        }
-        \closedir($dir);
     }
 
     /**
@@ -113,28 +116,14 @@ trait FilesManagement
 
         // Simple copy for a file
         if (\is_file($source)) {
-            return \copy($source, $dest);
-        }
-
-        // Make destination directory
-        if (!\is_dir($dest) && !@\mkdir($dest, 0755, true) && !\is_dir($dest)) {
-            throw new \RuntimeException(\sprintf('Directory "%s" was not created', $dest));
+            return Filesystem::copy($source, $dest);
         }
 
         if (@\is_dir($source)) {
-            // Loop through the folder
-            /** @var \Directory $dir */
-            $dir = \dir($source);
-            while (false !== $entry = $dir->read()) {
-                // Skip pointers
-                if ('.' === $entry || '..' === $entry) {
-                    continue;
-                }
-                // Deep copy directories
-                self::xcopy("$source/$entry", "$dest/$entry");
+            // Deep copy the directory and its contents
+            if (!Filesystem::copyDirectory((string)$source, (string)$dest)) {
+                throw new \RuntimeException(\sprintf('Directory "%s" was not created', $dest));
             }
-            // Clean up
-            $dir->close();
         }
 
         return true;
@@ -161,33 +150,7 @@ trait FilesManagement
             return false;
         }
 
-        $success = true;
-        // remove old files
-        $dirInfo = new \SplFileInfo($src);
-        // validate is a directory
-        if ($dirInfo->isDir()) {
-            $fileList = \array_diff(\scandir($src, \SCANDIR_SORT_NONE), ['..', '.']);
-            foreach ($fileList as $k => $v) {
-                $fileInfo = new \SplFileInfo("{$src}/{$v}");
-                if ($fileInfo->isDir()) {
-                    // recursively handle subdirectories
-                    if (!$success = self::deleteDirectory($fileInfo->getRealPath())) {
-                        break;
-                    }
-                } elseif (!($success = \unlink($fileInfo->getRealPath()))) {
-                    break;
-                }
-            }
-            // now delete this (sub)directory if all the files are gone
-            if ($success) {
-                $success = \rmdir($dirInfo->getRealPath());
-            }
-        } else {
-            // input is not a valid directory
-            $success = false;
-        }
-
-        return $success;
+        return Filesystem::deleteDirectory((string)$src);
     }
 
     /**
@@ -215,25 +178,7 @@ trait FilesManagement
             return false;
         }
 
-        $success = true;
-
-        // Open the source directory to read in files
-        $iterator = new \DirectoryIterator($src);
-        foreach ($iterator as $fObj) {
-            if ($fObj->isFile()) {
-                $filename = $fObj->getPathname();
-                $fObj     = null; // clear this iterator object to close the file
-                if (!\unlink($filename)) {
-                    return false; // couldn't delete the file
-                }
-            } elseif (!$fObj->isDot() && $fObj->isDir()) {
-                // Try recursively on directory
-                self::rrmdir($fObj->getPathname());
-            }
-        }
-        $iterator = null;   // clear iterator Obj to close file/directory
-
-        return \rmdir($src); // remove the directory & return results
+        return Filesystem::deleteDirectory((string)$src); // remove the directory & return results
     }
 
     /**
@@ -261,24 +206,11 @@ trait FilesManagement
         }
 
         // If the destination directory does not exist and could not be created stop processing
-        if (!\is_dir($dest) && !@\mkdir($dest, 0755, true) && !\is_dir($dest)) {
+        if (!\is_dir($dest) && !Filesystem::mkdir($dest, 0755) && !\is_dir($dest)) {
             return false;
         }
 
-        // Open the source directory to read in files
-        $iterator = new \DirectoryIterator($src);
-        foreach ($iterator as $fObj) {
-            if ($fObj->isFile()) {
-                \rename($fObj->getPathname(), "{$dest}/" . $fObj->getFilename());
-            } elseif (!$fObj->isDot() && $fObj->isDir()) {
-                // Try recursively on directory
-                self::rmove($fObj->getPathname(), "{$dest}/" . $fObj->getFilename());
-                //                rmdir($fObj->getPath()); // now delete the directory
-            }
-        }
-        $iterator = null;   // clear iterator Obj to close file/directory
-
-        return \rmdir($src); // remove the directory & return results
+        return Filesystem::moveDirectory((string)$src, (string)$dest); // move contents & remove the source directory
     }
 
     /**
@@ -309,21 +241,11 @@ trait FilesManagement
         }
 
         // If the destination directory does not exist and could not be created stop processing
-        if (!\is_dir($dest) && !@\mkdir($dest, 0755, true) && !\is_dir($dest)) {
+        if (!\is_dir($dest) && !Filesystem::mkdir($dest, 0755) && !\is_dir($dest)) {
             return false;
         }
 
-        // Open the source directory to read in files
-        $iterator = new \DirectoryIterator($src);
-        foreach ($iterator as $fObj) {
-            if ($fObj->isFile()) {
-                \copy($fObj->getPathname(), "{$dest}/" . $fObj->getFilename());
-            } elseif (!$fObj->isDot() && $fObj->isDir()) {
-                self::rcopy($fObj->getPathname(), "{$dest}/" . $fObj->getFilename());
-            }
-        }
-
-        return true;
+        return Filesystem::copyDirectory((string)$src, (string)$dest);
     }
 
     private static function isSafeFilesystemPath(string $path): bool

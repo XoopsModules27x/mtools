@@ -2,17 +2,20 @@
 
 namespace Tests\Unit;
 
-use MtoolsCorePreload;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Class MtoolsCorePreloadTest.
- *
- * @covers \MtoolsCorePreload
+ * Class coreTest.
  */
-final class MtoolsCorePreloadTest extends TestCase
+#[CoversClass(\MtoolsCorePreload::class)]
+#[Group('legacy')]
+final class coreTest extends TestCase
 {
-    private MtoolsCorePreload $mtoolsCorePreload;
+    use \RequiresXoops;
+
+    private \MtoolsCorePreload $mtoolsCorePreload;
 
     /**
      * {@inheritdoc}
@@ -21,8 +24,10 @@ final class MtoolsCorePreloadTest extends TestCase
     {
         parent::setUp();
 
+        $this->requiresXoops();
+
         /** @todo Correctly instantiate tested object to use it. */
-        $this->mtoolsCorePreload = new MtoolsCorePreload();
+        $this->mtoolsCorePreload = new \MtoolsCorePreload();
     }
 
     /**

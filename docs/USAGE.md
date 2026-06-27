@@ -12,14 +12,47 @@ Consumer modules should load:
 require_once XOOPS_ROOT_PATH . '/modules/mtools/bootstrap.php';
 ```
 
-The bootstrap registers the `XoopsModules\Mtools\...` namespace and exposes:
+The bootstrap registers the `XoopsModules\Mtools\...` namespace. The
+consumer-facing entry point is `Module\ConsumerRuntime` (it wraps the low-level
+`Bootstrap` primitive).
+
+The recommended shape is an absence-safe shim plus two guard sites. Ship a
+`<dirname>_mtools_dependency_error()` helper that survives mtools being missing
+entirely, delegating to `ConsumerRuntime` when the class is present:
 
 ```php
-\XoopsModules\Mtools\Bootstrap::checkRuntime('1.0.0', '1.1.0');
+// include/mtools_dependency.php (loaded from bootstrap.php)
+function quotes_mtools_dependency_error(): string
+{
+    if (!class_exists(\XoopsModules\Mtools\Module\ConsumerRuntime::class)) {
+        return 'This module requires the mtools module to be installed.';
+    }
+
+    return \XoopsModules\Mtools\Module\ConsumerRuntime::dependencyError();
+}
 ```
 
-Use this in install hooks, update hooks, admin bootstrap files, block files, CLI
+At public/admin entry points (where XOOPS is loaded), guard and degrade:
+
+```php
+\XoopsModules\Mtools\Module\ConsumerRuntime::guard(XOOPS_URL);
+```
+
+In install/update hooks, assert readiness against the `$module`:
+
+```php
+if (!\XoopsModules\Mtools\Module\ConsumerRuntime::assertReady($module)) {
+    return false;
+}
+```
+
+Use these in install hooks, update hooks, admin bootstrap files, block files, CLI
 scripts, and tests. Do not require files from `mtools/preloads/` directly.
+
+`Bootstrap::checkRuntime()` / `assertRuntime()` remain available as the low-level
+primitives if you need the raw status array; both accept a trailing
+`bool $requireActive = false` (the default treats installed + version-compatible
+as ready — see `ARCHITECTURE.md`).
 
 ## Stable Shared API
 
@@ -35,6 +68,18 @@ Only these classes are intended for normal consumer use.
 
 Purpose: shared XOOPS utility methods, including local XOOPS/PHP requirement
 checks and filesystem setup helpers.
+
+`SysUtility` is now a back-compat **facade**: its former statics forward to the
+focused `Common\Text`, `Common\Db`, and `Common\Output` classes (keeping their
+original signatures). Consumer subclasses keep extending it unchanged. Its
+consumer-aware methods — `selectSorting()` and `getEditor()` — resolve the
+**consumer's** `Helper` via late static binding (`consumerHelper()`), not
+mtools' own. New pure code should target `Text`/`Db` directly.
+
+For pagination, `Common\Paginator` is **deprecated**: it now delegates its page
+math to the pure `Common\PaginationState` and remains only as a legacy renderer.
+Prefer `PaginationState` for the math and the `render_pagination` Smarty plugin
+(from `xoops/smartyextensions`) for the markup.
 
 Typical consumer adapter:
 
@@ -65,20 +110,108 @@ XMF target: candidate after more consumer coverage.
 Purpose: load module-local `config/config.php`, `config/icons.php`, and
 `config/paths.php` into a typed shared object.
 
-Example:
+Build it with the named constructor `forModule()`, which derives the consumer
+base directory from the `Helper`:
 
 ```php
-$configurator = new \XoopsModules\Mtools\Common\Configurator($helper->path());
+$configurator = \XoopsModules\Mtools\Common\Configurator::forModule($helper);
 
 foreach ($configurator->uploadFolders as $folder) {
     $utility::prepareFolder($folder);
 }
 ```
 
+The no-argument / empty constructor now **throws** `InvalidArgumentException`
+instead of silently defaulting to mtools' own directory (the old footgun). Pass
+the consumer path explicitly, or use `forModule($helper)`.
+
+`Configurator::config()` returns a typed, immutable `Common\ModuleConfig` value
+object (built via `ModuleConfig::fromObject()`) — prefer it over reading the raw
+`stdClass` when you need a real contract.
+
 The consumer module still owns the config files; mTools only provides the
 reader contract.
 
-Stable since: `1.0.0`
+Stable since: `1.0.0` — `forModule()` / `config()` since `1.2.0`
+
+### ModuleContext
+
+Purpose: an immutable per-module view of paths, URLs, the upload/images folders,
+and config, built over `Xoops\Helpers\Service\Path`/`Url`/`Config`.
+
+Construct it for a dirname or from a `Helper`, then read what you need:
+
+```php
+$ctx = \XoopsModules\Mtools\Module\ModuleContext::fromHelper($helper);
+// or: ModuleContext::for('quotes');
+
+$ctx->path('admin');        // filesystem path, optional sub-path
+$ctx->uploadPath();         // upload folder path
+$ctx->url('index.php');     // public URL
+$ctx->adminUrl();           // admin URL
+$ctx->imagesUrl();          // assets/images URL
+$ctx->config('key');        // a module config value
+```
+
+It can also reproduce the legacy `{UPPER}_*` constant block (e.g.
+`QUOTES_PATH`, `QUOTES_URL`, `QUOTES_UPLOAD_PATH`) for code that still reads
+those constants:
+
+```php
+$ctx->defineConstants();
+```
+
+Stable since: `1.2.0`
+
+### Module\Installer
+
+Purpose: the shared install/update filesystem boilerplate, so a module's
+`oninstall.php` / `onupdate.php` shrink to one or two calls.
+
+```php
+// pre-install: create folders + drop the module's own tables
+\XoopsModules\Mtools\Module\Installer::prepare($module, $configurator);
+
+// install: folders + blank index files + test data + purge stray .html templates
+\XoopsModules\Mtools\Module\Installer::install($module, $configurator);
+```
+
+The granular steps are also public if a hook needs only part of the work:
+`createUploadFolders()`, `copyBlankFiles()`, `copyTestFolders()`,
+`dropModuleTables()`, `purgeHtmlTemplates()`, `removeOldAssets()` (each takes the
+`$module` and/or the `Configurator`).
+
+Stable since: `1.2.0`
+
+### Resizer
+
+Purpose: a pure GD image resizer that replaces the ~19 near-identical per-module
+copies. It reads no request/upload superglobals, echoes nothing, and redirects
+nowhere — you hand it a request value object and get a result value object back.
+
+```php
+use XoopsModules\Mtools\Common\Resizer;
+use XoopsModules\Mtools\Common\ResizeRequest;
+
+$result = (new Resizer())->resize(new ResizeRequest(
+    sourcePath: $source,
+    targetPath: $target,
+    maxWidth:   800,
+    maxHeight:  600,
+    fit:        ResizeRequest::FIT_INSIDE,   // FIT_INSIDE | FIT_COVER | FIT_STRETCH
+    quality:    85,
+));
+
+if ($result->ok) {
+    // $result->targetPath, $result->width, $result->height
+} else {
+    // $result->error
+}
+```
+
+It honours EXIF orientation and preserves the source image format.
+
+Stable since: `1.2.0`
 
 ### VersionChecks
 

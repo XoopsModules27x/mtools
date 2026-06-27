@@ -29,6 +29,8 @@ namespace XoopsModules\Mtools\Common;
 
 /**
  * Class Breadcrumb
+ *
+ * @api Stable Common-tier API (Lab\* is experimental, module-local code is private).
  */
 class Breadcrumb
 {
