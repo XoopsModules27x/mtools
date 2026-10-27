@@ -9,6 +9,10 @@
 [![Latest Pre-Release](https://img.shields.io/github/tag/XoopsModules25x/mtools.svg?style=flat)](https://github.com/XoopsModules25x/mtools/tags/)
 [![Latest Version](https://img.shields.io/github/release/XoopsModules25x/mtools.svg?style=flat)](https://github.com/XoopsModules25x/mtools/releases/)
 
+---
+**NOTE:** mtools was converted into a package library: https://github.com/XOOPS/moduletools
+---
+
 **mtools** is a XOOPS helper-host module. It provides a stable shared-helper
 layer for modules such as `quotes`, so reusable module support code can live in
 one vetted place before graduating to XMF.
